@@ -34,7 +34,11 @@
 #include "common/password.h"
 #include "common/util.h"
 #include "cryptonote_core/cryptonote_core.h"
+#include "cryptonote_core/cryptonote_tx_utils.h"
 #include "cryptonote_basic/miner.h"
+#include "cryptonote_basic/cryptonote_basic_impl.h"
+#include "cryptonote_basic/cryptonote_basic.h"
+#include "cryptonote_basic/cryptonote_format_utils.h"
 #include "daemon/command_server.h"
 #include "daemon/daemon.h"
 #include "daemon/executor.h"
@@ -98,6 +102,7 @@ int main(int argc, char const * argv[])
 
       // Hidden options
       command_line::add_arg(hidden_options, daemon_args::arg_command);
+      command_line::add_arg(hidden_options, daemon_args::arg_create_genesis_tx);
 
       visible_options.add(core_settings);
       all_options.add(visible_options);
@@ -123,7 +128,7 @@ int main(int argc, char const * argv[])
 
     if (command_line::get_arg(vm, command_line::arg_help))
     {
-      std::cout << "NERVA '" << MONERO_RELEASE_NAME << "' (v" << MONERO_VERSION_FULL << ")" << ENDL << ENDL;
+      std::cout << "Amity '" << MONERO_RELEASE_NAME << "' (v" << MONERO_VERSION_FULL << ")" << ENDL << ENDL;
       std::cout << "Usage: " + std::string{argv[0]} + " [options|settings] [daemon_command...]" << std::endl << std::endl;
       std::cout << visible_options << std::endl;
       return 0;
@@ -132,7 +137,7 @@ int main(int argc, char const * argv[])
     // Monero Version
     if (command_line::get_arg(vm, command_line::arg_version))
     {
-      std::cout << "NERVA '" << MONERO_RELEASE_NAME << "' (v" << MONERO_VERSION_FULL << ")" << ENDL;
+      std::cout << "Amity '" << MONERO_RELEASE_NAME << "' (v" << MONERO_VERSION_FULL << ")" << ENDL;
       return 0;
     }
 
@@ -172,6 +177,31 @@ int main(int argc, char const * argv[])
     {
       std::cerr << "Can't specify more than one of --testnet and --stagenet" << ENDL;
       return 1;
+    }
+
+    bool gb = command_line::get_arg(vm, daemon_args::arg_create_genesis_tx);
+
+    if (gb)
+    {
+      cryptonote::transaction tx;
+
+      if (construct_genesis_tx(tx))
+      {
+        std::stringstream ss;
+        binary_archive<true> ba(ss);
+        std::string tx_hex = string_tools::buff_to_hex_nodelimer(tx_to_blob(tx));
+        bool r = do_serialize(ba, tx);
+        if (r)
+        {
+          MGINFO_YELLOW(ENDL << "New Genesis TX:" << ENDL << tx_hex);
+          return 1;
+        }
+      }
+      else
+      {
+        MERROR("Could not create genesis TX");
+        return 1;
+      }
     }
 
     // data_dir
@@ -218,7 +248,7 @@ int main(int argc, char const * argv[])
       tools::set_max_concurrency(command_line::get_arg(vm, daemon_args::arg_max_concurrency));
 
     // logging is now set up
-    MGINFO("NERVA '" << MONERO_RELEASE_NAME << "' (v" << MONERO_VERSION_FULL << ")");
+    MGINFO("Amity '" << MONERO_RELEASE_NAME << "' (v" << MONERO_VERSION_FULL << ")");
     // If there are positional options, we're running a daemon command
     {
       auto command = command_line::get_arg(vm, daemon_args::arg_command);

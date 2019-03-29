@@ -1,7 +1,7 @@
 #!/bin/bash
 
 BUILDER_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-NERVA_DIR=$(dirname $BUILDER_DIR)
+AMITY_DIR=$(dirname $BUILDER_DIR)
 source ${BUILDER_DIR}/helpers
 
 if [ -z ${STATIC} ]; then
@@ -46,4 +46,4 @@ chmod +x $lscript
 cp ${BUILDER_DIR}/${REPO_NAME}-logo-white.png ${BUILDER_DIR}/build/release/bin/${REPO_NAME}-logo-white.png
 cp ${BUILDER_DIR}/${REPO_NAME}-logo-black.png ${BUILDER_DIR}/build/release/bin/${REPO_NAME}-logo-black.png
 
-zip -rj ${NERVA_DIR}/${REPO_NAME}-v${NERVA_VERSION}_linux-x64.zip ${BUILDER_DIR}/build/release/bin/*
+zip -rj ${AMITY_DIR}/${REPO_NAME}-v${AMITY_VERSION}_linux-x64.zip ${BUILDER_DIR}/build/release/bin/*

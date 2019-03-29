@@ -936,9 +936,7 @@ public:
    */
   virtual cryptonote::blobdata get_block_blob_from_height(const uint64_t& height) const = 0;
 
-  virtual void get_v3_data(char* salt, uint64_t height, uint32_t seed) const = 0;
-  virtual void get_v4_data(char* salt, uint64_t height, uint32_t seed) const = 0;
-  virtual uint32_t get_v5_data(char* salt, uint64_t height, uint32_t seed) const = 0;
+  virtual void get_salt(HC128_State* rng_state, uint64_t height, char* out) const = 0;
 
   virtual void build_cache(uint64_t height) const = 0;
 

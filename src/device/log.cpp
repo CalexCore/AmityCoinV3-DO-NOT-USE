@@ -59,7 +59,6 @@ namespace hw {
     #undef MONERO_DEFAULT_LOG_CATEGORY
     #define MONERO_DEFAULT_LOG_CATEGORY "device.ledger"
 
-    
     #ifdef DEBUG_HWDEVICE
     extern crypto::secret_key dbg_viewkey;
     extern crypto::secret_key dbg_spendkey;
@@ -164,7 +163,6 @@ namespace hw {
       check(msg, info, h, d, 8, crypted);
     }
     #endif
-
   }
   #endif //WITH_DEVICE_LEDGER    
 

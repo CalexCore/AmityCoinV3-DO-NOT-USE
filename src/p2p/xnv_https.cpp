@@ -82,7 +82,7 @@ namespace analytics
         {
             std::string url = "https://" + a + "/api/submitanalytics.php";
 
-            std::string user_agent = "nerva-cli/";
+            std::string user_agent = "amity-cli/";
             user_agent.append(MONERO_VERSION);
 
             CURL* curl = curl_easy_init(); 

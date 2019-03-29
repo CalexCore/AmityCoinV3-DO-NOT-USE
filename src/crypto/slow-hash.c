@@ -156,7 +156,7 @@ char* get_salt_state(void)
     return salt_state;
 }
 
-void cn_slow_hash_v11(const void *data, size_t length, char *hash, size_t iters, random_values *r, char *sp_bytes, uint8_t init_size_blk, uint16_t xx, uint16_t yy)
+void cn_slow_hash_v1(const void *data, size_t length, char *hash, size_t iters, random_values *r, char *sp_bytes, uint8_t init_size_blk, uint16_t xx, uint16_t yy)
 {
     char *salt_hash = (char *)malloc(32);
     init_hash();
@@ -199,113 +199,7 @@ void cn_slow_hash_v11(const void *data, size_t length, char *hash, size_t iters,
     free(salt_hash);
 }
 
-void cn_slow_hash_v10(const void *data, size_t length, char *hash, size_t iters, random_values *r, char *sp_bytes, uint8_t init_size_blk, uint16_t xx, uint16_t yy, uint16_t zz, uint16_t ww)
-{
-    char *salt_hash = (char *)malloc(32);
-
-    init_hash();
-    expand_key();
-    randomize_scratchpad_256k(r, sp_bytes, hp_state);
-    xor_u64();
-
-    _b = _mm_load_si128(R128(b));
-
-    uint16_t temp_1 = 0;
-    uint32_t offset_1 = 0;
-    uint32_t offset_2 = 0;
-
-    uint16_t r2[6] = {xx ^ yy, xx ^ zz, xx ^ ww, yy ^ zz, yy ^ ww, zz ^ ww};
-    uint16_t k = 1, l = 1, m = 1;
-
-    for (k = 1; k < xx; k++)
-    {
-        r2[0] ^= r2[1];
-        r2[1] ^= r2[2];
-        r2[2] ^= r2[3];
-        r2[3] ^= r2[4];
-        r2[4] ^= r2[5];
-        r2[5] ^= r2[0];
-
-        pre_aes();
-        _c = _mm_aesenc_si128(_c, _a);
-        post_aes_variant();
-        salt_pad(r2[0], r2[3], r2[1], r2[4]);
-        r2[0] ^= (r2[1] ^ r2[3]);
-        r2[1] ^= (r2[0] ^ r2[2]);
-
-        for (l = 1; l < yy; l++)
-        {
-            pre_aes();
-            _c = _mm_aesenc_si128(_c, _a);
-            post_aes_variant();
-            salt_pad(r2[1], r2[4], r2[2], r2[5]);
-            r2[2] ^= (r2[3] ^ r2[5]);
-            r2[3] ^= (r2[2] ^ r2[4]);
-
-            for (m = 1; m < zz; m++)
-            {
-                pre_aes();
-                _c = _mm_aesenc_si128(_c, _a);
-                post_aes_variant();
-                salt_pad(r2[2], r2[5], r2[3], r2[0]);
-                r2[4] ^= (r2[5] ^ r2[1]);
-                r2[5] ^= (r2[4] ^ r2[0]);
-            }
-        }
-    }
-
-    for (i = 0; i < iters; i++)
-    {
-        pre_aes();
-        _c = _mm_aesenc_si128(_c, _a);
-        post_aes_variant();
-    }
-
-    finalize_hash();
-    free(salt_hash);
-}
-
-void cn_slow_hash_v9(const void *data, size_t length, char *hash, size_t iters, random_values *r, char* sp_bytes)
-{
-    uint32_t init_size_blk = INIT_SIZE_BLK;
-    init_hash();
-    expand_key();
-    randomize_scratchpad_4k(r, sp_bytes, hp_state);
-    xor_u64();
-
-    _b = _mm_load_si128(R128(b));
-
-    for(i = 0; i < iters; i++)
-    {
-        pre_aes();
-        _c = _mm_aesenc_si128(_c, _a);
-        post_aes_variant();
-    }
-
-    finalize_hash();
-}
-
-void cn_slow_hash_v7_8(const void *data, size_t length, char *hash, size_t iters, random_values *r)
-{
-    uint32_t init_size_blk = INIT_SIZE_BLK;
-    init_hash();
-    expand_key();
-    randomize_scratchpad(r, hp_state);
-    xor_u64();
-
-    _b = _mm_load_si128(R128(b));
-
-    for (i = 0; i < iters; i++)
-    {
-        pre_aes();
-        _c = _mm_aesenc_si128(_c, _a);
-        post_aes_variant();
-    }
-
-    finalize_hash();
-}
-
-void cn_slow_hash(const void *data, size_t length, char *hash, int variant, int prehashed, size_t iters)
+void cn_slow_hash(const void *data, size_t length, char *hash, int prehashed)
 { 
     uint32_t init_size_blk = INIT_SIZE_BLK;
     init_hash();
@@ -316,7 +210,6 @@ void cn_slow_hash(const void *data, size_t length, char *hash, int variant, int 
         hash_process(&state.hs, data, length);
 
     memcpy(text, state.init, init_size_byte);
-    const uint64_t tweak1_2 = variant > 0 ? (state.hs.w[24] ^ (*((const uint64_t *)NONCE_POINTER))) : 0;
 
     aes_expand_key(state.hs.b, expandedKey);
     for(i = 0; i < MEMORY / init_size_byte; i++)
@@ -329,23 +222,11 @@ void cn_slow_hash(const void *data, size_t length, char *hash, int variant, int 
 
     _b = _mm_load_si128(R128(b));
 
-    if (variant > 0)
+    for(i = 0; i < 0x20000; i++)
     {
-        for(i = 0; i < iters; i++)
-        {
-            pre_aes();
-            _c = _mm_aesenc_si128(_c, _a);
-            post_aes_variant();
-        }
-    }
-    else
-    {
-        for(i = 0; i < iters; i++)
-        {
-            pre_aes();
-            _c = _mm_aesenc_si128(_c, _a);
-            post_aes_novariant();
-        }   
+        pre_aes();
+        _c = _mm_aesenc_si128(_c, _a);
+        post_aes_novariant();
     }
 
     finalize_hash();
@@ -373,7 +254,7 @@ char* get_salt_state(void)
     return salt_state;
 }
 
-void cn_slow_hash_v11(const void *data, size_t length, char *hash, size_t iters, random_values *r, char *sp_bytes, uint8_t init_size_blk, uint16_t xx, uint16_t yy)
+void cn_slow_hash_v1(const void *data, size_t length, char *hash, size_t iters, random_values *r, char *sp_bytes, uint8_t init_size_blk, uint16_t xx, uint16_t yy)
 {
     char *salt_hash = (char *)malloc(32);
     init_hash();
@@ -406,93 +287,7 @@ void cn_slow_hash_v11(const void *data, size_t length, char *hash, size_t iters,
     free(salt_hash);
 }
 
-void cn_slow_hash_v10(const void *data, size_t length, char *hash, size_t iters, random_values *r, char *sp_bytes, uint8_t init_size_blk, uint16_t xx, uint16_t yy, uint16_t zz, uint16_t ww)
-{
-    char *salt_hash = (char *)malloc(32);
-    init_hash();
-    expand_key();
-    randomize_scratchpad_256k(r, sp_bytes, hp_state);
-    xor_u64();
-
-    uint16_t temp_1 = 0;
-    uint32_t offset_1 = 0;
-    uint32_t offset_2 = 0;
-
-    uint16_t r2[6] = {xx ^ yy, xx ^ zz, xx ^ ww, yy ^ zz, yy ^ ww, zz ^ ww};
-    uint16_t k = 1, l = 1, m = 1;
-
-    for (k = 1; k < xx; k++)
-    {
-        r2[0] ^= r2[1];
-        r2[1] ^= r2[2];
-        r2[2] ^= r2[3];
-        r2[3] ^= r2[4];
-        r2[4] ^= r2[5];
-        r2[5] ^= r2[0];
-
-        aes_sw_variant();
-        salt_pad(r2[0], r2[3], r2[1], r2[4]);
-        r2[0] ^= (r2[1] ^ r2[3]);
-        r2[1] ^= (r2[0] ^ r2[2]);
-
-        for (l = 1; l < yy; l++)
-        {
-            aes_sw_variant();
-            salt_pad(r2[1], r2[4], r2[2], r2[5]);
-            r2[2] ^= (r2[3] ^ r2[5]);
-            r2[3] ^= (r2[2] ^ r2[4]);
-
-            for (m = 1; m < zz; m++)
-            {
-                aes_sw_variant();
-                salt_pad(r2[2], r2[5], r2[3], r2[0]);
-                r2[4] ^= (r2[5] ^ r2[1]);
-                r2[5] ^= (r2[4] ^ r2[0]);
-            }
-        }
-    }
-
-    for (i = 0; i < iters; i++) {
-        aes_sw_variant();
-    }
-
-    finalize_hash();
-    free(salt_hash);
-}
-
-void cn_slow_hash_v9(const void *data, size_t length, char *hash, size_t iters, random_values *r, char *sp_bytes)
-{
-    uint32_t init_size_blk = INIT_SIZE_BLK;
-    char *salt_hash = (char *)malloc(32);
-    init_hash();
-    expand_key();
-    randomize_scratchpad_4k(r, sp_bytes, hp_state);
-    xor_u64();
-
-    for (i = 0; i < iters; i++) {
-        aes_sw_variant();
-    }
-
-    finalize_hash();
-    free(salt_hash);
-}
-
-void cn_slow_hash_v7_8(const void *data, size_t length, char *hash, size_t iters, random_values *r)
-{
-    uint32_t init_size_blk = INIT_SIZE_BLK;
-    init_hash();
-    expand_key();
-    randomize_scratchpad(r, hp_state);
-    xor_u64();
-
-    for (i = 0; i < iters; i++) {
-        aes_sw_variant();
-    }
-
-    finalize_hash();
-}
-
-void cn_slow_hash(const void *data, size_t length, char *hash, int variant, int prehashed, size_t iters)
+void cn_slow_hash(const void *data, size_t length, char *hash, int prehashed)
 {
     uint32_t init_size_blk = INIT_SIZE_BLK;
     init_hash();
@@ -506,13 +301,6 @@ void cn_slow_hash(const void *data, size_t length, char *hash, int variant, int 
     memcpy(aes_key, state.hs.b, AES_KEY_SIZE);
     aes_ctx = (oaes_ctx *) oaes_alloc();
 
-    uint8_t tweak1_2[8] = {0};
-    if (variant > 0)
-    {
-        memcpy(&tweak1_2, &state.hs.b[192], sizeof(tweak1_2));
-        xor64(tweak1_2, NONCE_POINTER);
-    }
-
     oaes_key_import_data(aes_ctx, aes_key, AES_KEY_SIZE);
     for (i = 0; i < MEMORY / init_size_byte; i++) {
         for (j = 0; j < INIT_SIZE_BLK; j++) {
@@ -523,14 +311,8 @@ void cn_slow_hash(const void *data, size_t length, char *hash, int variant, int 
 
     xor_u64();
 
-    if (variant > 0) {
-        for (i = 0; i < iters; i++) {
-            aes_sw_variant();
-        }
-    } else {
-        for (i = 0; i < iters; i++) {
-            aes_sw_novariant();
-        }
+    for (i = 0; i < 0x20000; i++) {
+        aes_sw_novariant();
     }
 
     finalize_hash();

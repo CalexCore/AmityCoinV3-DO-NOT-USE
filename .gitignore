@@ -2,3 +2,5 @@
 builder/build
 db
 *.zip
+*.keys
+*.cache

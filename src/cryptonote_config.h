@@ -37,124 +37,106 @@
 #include <set>
 #include <boost/uuid/uuid.hpp>
 
-#define CRYPTONOTE_DNS_TIMEOUT_MS 20000
+#define CRYPTONOTE_DNS_TIMEOUT_MS                       20000
 
-#define CRYPTONOTE_MAX_BLOCK_NUMBER 500000000
-#define CRYPTONOTE_MAX_BLOCK_SIZE 500000000 // block header blob limit, never used!
-#define CRYPTONOTE_MAX_TX_SIZE 1000000000
-#define CRYPTONOTE_PUBLIC_ADDRESS_TEXTBLOB_VER 0
-#define CRYPTONOTE_MINED_MONEY_UNLOCK_WINDOW 10
-#define CRYPTONOTE_MINED_MONEY_UNLOCK_WINDOW_V6 20
-#define CURRENT_TRANSACTION_VERSION 1
-#define CURRENT_BLOCK_MAJOR_VERSION 1
-#define CURRENT_BLOCK_MINOR_VERSION 1
-#define CRYPTONOTE_BLOCK_FUTURE_TIME_LIMIT 60 * 60 * 2
-#define CRYPTONOTE_DEFAULT_TX_SPENDABLE_AGE 10
+#define CRYPTONOTE_MAX_BLOCK_NUMBER                     500000000
+#define CRYPTONOTE_MAX_BLOCK_SIZE                       500000000  // block header blob limit, never used!
+#define CRYPTONOTE_MAX_TX_SIZE                          1000000000
+#define CRYPTONOTE_PUBLIC_ADDRESS_TEXTBLOB_VER          0
+#define CRYPTONOTE_MINED_MONEY_UNLOCK_WINDOW            20
+#define CURRENT_TRANSACTION_VERSION                     1
+#define CURRENT_BLOCK_MAJOR_VERSION                     1
+#define CURRENT_BLOCK_MINOR_VERSION                     1
+#define CRYPTONOTE_DEFAULT_TX_SPENDABLE_AGE             20
 
-#define BULLETPROOF_MAX_OUTPUTS 16
-#define BULLETPROOF_SIMPLE_FORK_HEIGHT 8
-#define BULLETPROOF_FULL_FORK_HEIGHT 11
+#define BULLETPROOF_MAX_OUTPUTS                         16
+#define BULLETPROOF_SIMPLE_FORK_HEIGHT                  1
+#define BULLETPROOF_FULL_FORK_HEIGHT                    2
 
-#define BLOCKCHAIN_TIMESTAMP_CHECK_WINDOW 60
+#define BLOCKCHAIN_TIMESTAMP_CHECK_WINDOW               12
+#define CRYPTONOTE_BLOCK_FUTURE_TIME_LIMIT              60*5
 
-#define CRYPTONOTE_BLOCK_FUTURE_TIME_LIMIT_V2 60 * 24
-#define BLOCKCHAIN_TIMESTAMP_CHECK_WINDOW_V2 12
 
-#define CRYPTONOTE_BLOCK_FUTURE_TIME_LIMIT_V6 60 * 5
+#define MONEY_SUPPLY                                    ((uint64_t)(-1))
+#define EMISSION_SPEED_FACTOR_PER_MINUTE                (23)
+#define FINAL_SUBSIDY_PER_MINUTE                        ((uint64_t)300000000000) // 3 * pow(10, 11)
+#define GENESIS_BLOCK_REWARD                            ((uint64_t)150000000000000000)                            
 
-// MONEY_SUPPLY - total number coins to be generated
-#define MONEY_SUPPLY ((uint64_t)(-1))
-#define EMISSION_SPEED_FACTOR_PER_MINUTE (18)
-#define FINAL_SUBSIDY_PER_MINUTE ((uint64_t)300000000000) // 3 * pow(10, 11)
-
-#define CRYPTONOTE_REWARD_BLOCKS_WINDOW 100
-#define CRYPTONOTE_BLOCK_GRANTED_FULL_REWARD_ZONE_V1 300000
-#define CRYPTONOTE_BLOCK_GRANTED_FULL_REWARD_ZONE_V2 CRYPTONOTE_BLOCK_GRANTED_FULL_REWARD_ZONE_V1
-#define CRYPTONOTE_COINBASE_BLOB_RESERVED_SIZE 600
-#define CRYPTONOTE_DISPLAY_DECIMAL_POINT 12
+#define CRYPTONOTE_REWARD_BLOCKS_WINDOW                 100
+#define CRYPTONOTE_BLOCK_GRANTED_FULL_REWARD_ZONE_V1    300000
+#define CRYPTONOTE_BLOCK_GRANTED_FULL_REWARD_ZONE_V2    CRYPTONOTE_BLOCK_GRANTED_FULL_REWARD_ZONE_V1
+#define CRYPTONOTE_COINBASE_BLOB_RESERVED_SIZE          600
+#define CRYPTONOTE_DISPLAY_DECIMAL_POINT                9
 // COIN - number of smallest units in one coin
-#define COIN ((uint64_t)1000000000000) // pow(10, 12)
+#define COIN                                            ((uint64_t)1000000000000) // pow(10, 12)
 
-#define DEFAULT_MIXIN 4
-#define DEFAULT_RINGSIZE DEFAULT_MIXIN + 1
-#define DYNAMIC_FEE_PER_KB_BASE_FEE ((uint64_t)400000000)               // 4 * pow(10,8)))
-#define DYNAMIC_FEE_PER_KB_BASE_BLOCK_REWARD ((uint64_t)10000000000000) // 10 * pow(10,12)
+#define DEFAULT_MIXIN                                   4
+#define DEFAULT_RINGSIZE                                DEFAULT_MIXIN + 1
+#define DYNAMIC_FEE_PER_KB_BASE_FEE                     ((uint64_t)400000000) // 4 * pow(10,8)))
+#define DYNAMIC_FEE_PER_KB_BASE_BLOCK_REWARD            ((uint64_t)10000000000000) // 10 * pow(10,12)
 
-#define DIFFICULTY_TARGET 60  // seconds
-#define DIFFICULTY_WINDOW 720 // blocks
-#define DIFFICULTY_LAG 15     // !!!
-#define DIFFICULTY_CUT 60     // timestamps to cut after sorting
-#define DIFFICULTY_BLOCKS_COUNT DIFFICULTY_WINDOW + DIFFICULTY_LAG
+#define DIFFICULTY_TARGET                               60  // seconds
 
-#define UNCLE_DIFFICULTY_TARGET DIFFICULTY_TARGET / 4
-#define UNCLE_REWARD_RATIO 2
-#define NEPHEW_REWARD_RATIO 20
-#define UNCLE_MINING_FORK_HEIGHT 12
+#define UNCLE_DIFFICULTY_TARGET                         DIFFICULTY_TARGET/4
+#define UNCLE_REWARD_RATIO                              2
+#define NEPHEW_REWARD_RATIO                             20
+#define UNCLE_MINING_FORK_HEIGHT                        100
 
-#define DIFFICULTY_BLOCKS_ESTIMATE_TIMESPAN DIFFICULTY_TARGET //just alias; used by tests
-#define DIFFICULTY_WINDOW_V2 17
-#define DIFFICULTY_CUT_V2 6
-#define DIFFICULTY_BLOCKS_COUNT_V2 DIFFICULTY_WINDOW_V2 + DIFFICULTY_CUT_V2 * 2
+#define DIFFICULTY_BLOCKS_ESTIMATE_TIMESPAN             DIFFICULTY_TARGET //just alias; used by tests
+#define DIFFICULTY_WINDOW                               17
+#define DIFFICULTY_CUT                                  6
+#define DIFFICULTY_BLOCKS_COUNT                         DIFFICULTY_WINDOW + DIFFICULTY_CUT*2
 
-#define DIFFICULTY_WINDOW_V3 60
-#define DIFFICULTY_BLOCKS_COUNT_V3 DIFFICULTY_WINDOW_V3
+#define CRYPTONOTE_LOCKED_TX_ALLOWED_DELTA_SECONDS_V1   DIFFICULTY_TARGET * CRYPTONOTE_LOCKED_TX_ALLOWED_DELTA_BLOCKS
+#define CRYPTONOTE_LOCKED_TX_ALLOWED_DELTA_BLOCKS       1
 
-#define DIFFICULTY_WINDOW_V6 60
-#define DIFFICULTY_BLOCKS_COUNT_V6 DIFFICULTY_WINDOW_V6 + 1
+#define BLOCKS_IDS_SYNCHRONIZING_DEFAULT_COUNT          10000  //by default, blocks ids count in synchronizing
+#define BLOCKS_SYNCHRONIZING_DEFAULT_COUNT              20     //by default, blocks count in blocks downloading
 
-#define CRYPTONOTE_LOCKED_TX_ALLOWED_DELTA_SECONDS_V1 DIFFICULTY_TARGET *CRYPTONOTE_LOCKED_TX_ALLOWED_DELTA_BLOCKS
-#define CRYPTONOTE_LOCKED_TX_ALLOWED_DELTA_BLOCKS 1
+#define CRYPTONOTE_MEMPOOL_TX_LIVETIME                  (86400*3) //seconds, three days
+#define CRYPTONOTE_MEMPOOL_TX_FROM_ALT_BLOCK_LIVETIME   604800 //seconds, one week
 
-#define BLOCKS_IDS_SYNCHRONIZING_DEFAULT_COUNT 10000 //by default, blocks ids count in synchronizing
-#define BLOCKS_SYNCHRONIZING_DEFAULT_COUNT 100       //by default, blocks count in blocks downloading
+#define COMMAND_RPC_GET_BLOCKS_FAST_MAX_COUNT           1000
 
-#define CRYPTONOTE_MEMPOOL_TX_LIVETIME (86400 * 3)           //seconds, three days
-#define CRYPTONOTE_MEMPOOL_TX_FROM_ALT_BLOCK_LIVETIME 604800 //seconds, one week
+#define P2P_LOCAL_WHITE_PEERLIST_LIMIT                  1000
+#define P2P_LOCAL_GRAY_PEERLIST_LIMIT                   5000
 
-#define COMMAND_RPC_GET_BLOCKS_FAST_MAX_COUNT 1000
+#define P2P_DEFAULT_CONNECTIONS_COUNT                   8
+#define P2P_DEFAULT_HANDSHAKE_INTERVAL                  60           //secondes
+#define P2P_DEFAULT_PACKET_MAX_SIZE                     50000000     //50000000 bytes maximum packet size
+#define P2P_DEFAULT_PEERS_IN_HANDSHAKE                  250
+#define P2P_DEFAULT_CONNECTION_TIMEOUT                  5000       //5 seconds
+#define P2P_DEFAULT_PING_CONNECTION_TIMEOUT             2000       //2 seconds
+#define P2P_DEFAULT_INVOKE_TIMEOUT                      60*2*1000  //2 minutes
+#define P2P_DEFAULT_HANDSHAKE_INVOKE_TIMEOUT            5000       //5 seconds
+#define P2P_DEFAULT_WHITELIST_CONNECTIONS_PERCENT       70
+#define P2P_DEFAULT_ANCHOR_CONNECTIONS_COUNT            2
 
-#define P2P_LOCAL_WHITE_PEERLIST_LIMIT 1000
-#define P2P_LOCAL_GRAY_PEERLIST_LIMIT 5000
+#define HF_SUPPORTED_MIN_VERSION                        version_string_to_integer("0.0.0.1")
+#define SUPPORTED_MIN_VERSION                           version_string_to_integer("0.0.0.1")
 
-#define P2P_DEFAULT_CONNECTIONS_COUNT 8
-#define P2P_DEFAULT_HANDSHAKE_INTERVAL 60    //secondes
-#define P2P_DEFAULT_PACKET_MAX_SIZE 50000000 //50000000 bytes maximum packet size
-#define P2P_DEFAULT_PEERS_IN_HANDSHAKE 250
-#define P2P_DEFAULT_CONNECTION_TIMEOUT 5000       //5 seconds
-#define P2P_DEFAULT_PING_CONNECTION_TIMEOUT 2000  //2 seconds
-#define P2P_DEFAULT_INVOKE_TIMEOUT 60 * 2 * 1000  //2 minutes
-#define P2P_DEFAULT_HANDSHAKE_INVOKE_TIMEOUT 5000 //5 seconds
-#define P2P_DEFAULT_WHITELIST_CONNECTIONS_PERCENT 70
-#define P2P_DEFAULT_ANCHOR_CONNECTIONS_COUNT 2
+#define P2P_FAILED_ADDR_FORGET_SECONDS                  (60*60)     //1 hour
+#define P2P_IP_BLOCKTIME_MAINNET                        (60*60*24)  //24 hour
+#define P2P_IP_BLOCKTIME_TESTNET                        (60*5)      //5 minutes
+#define P2P_IP_FAILS_BEFORE_BLOCK                       10
+#define P2P_IDLE_CONNECTION_KILL_INTERVAL               (5*60) //5 minutes
 
-#define HF_SUPPORTED_MIN_VERSION version_string_to_integer("0.1.6.3")
-#define SUPPORTED_MIN_VERSION    version_string_to_integer("0.1.5.6")
-
-#define P2P_FAILED_ADDR_FORGET_SECONDS (60 * 60) //1 hour
-#define P2P_IP_BLOCKTIME_MAINNET (60 * 60 * 24)  //24 hour
-#define P2P_IP_BLOCKTIME_TESTNET (60 * 5)        //5 minutes
-#define P2P_IP_FAILS_BEFORE_BLOCK 10
-#define P2P_IDLE_CONNECTION_KILL_INTERVAL (5 * 60) //5 minutes
-
-#define P2P_SUPPORT_FLAG_FLUFFY_BLOCKS 0x01
-#define P2P_SUPPORT_FLAGS P2P_SUPPORT_FLAG_FLUFFY_BLOCKS
+#define P2P_SUPPORT_FLAG_FLUFFY_BLOCKS                  0x01
+#define P2P_SUPPORT_FLAGS                               P2P_SUPPORT_FLAG_FLUFFY_BLOCKS
 
 #define ALLOW_DEBUG_COMMANDS
 
-#define CRYPTONOTE_NAME "nerva"
-#define CRYPTONOTE_POOLDATA_FILENAME "poolstate.bin"
-#define CRYPTONOTE_BLOCKCHAINDATA_FILENAME "data.mdb"
-#define CRYPTONOTE_BLOCKCHAINDATA_LOCK_FILENAME "lock.mdb"
-#define P2P_NET_DATA_FILENAME "p2pstate.nerva.v11.bin"
-#define MINER_CONFIG_FILE_NAME "miner_conf.json"
+#define CRYPTONOTE_NAME                                 "amity"
+#define CRYPTONOTE_POOLDATA_FILENAME                    "poolstate.bin"
+#define CRYPTONOTE_BLOCKCHAINDATA_FILENAME              "data.mdb"
+#define CRYPTONOTE_BLOCKCHAINDATA_LOCK_FILENAME         "lock.mdb"
+#define P2P_NET_DATA_FILENAME                           "p2pstate.amity.bin"
+#define MINER_CONFIG_FILE_NAME                          "miner_conf.json"
 
-#define THREAD_STACK_SIZE 5 * 1024 * 1024
-
-#define PER_KB_FEE_QUANTIZATION_DECIMALS 8
-
-#define HASH_OF_HASHES_STEP 256
-
-#define DEFAULT_TXPOOL_MAX_SIZE 648000000ull // 3 days at 300000, in bytes
+#define THREAD_STACK_SIZE                               5 * 1024 * 1024
+#define PER_KB_FEE_QUANTIZATION_DECIMALS                8
+#define HASH_OF_HASHES_STEP                             256
+#define DEFAULT_TXPOOL_MAX_SIZE                         648000000ull // 3 days at 300000, in bytes
 
 struct hard_fork
 {
@@ -168,95 +150,60 @@ namespace config
     uint64_t const DEFAULT_DUST_THRESHOLD = 0; // deprecated
     std::string const P2P_REMOTE_DEBUG_TRUSTED_PUB_KEY = "0000000000000000000000000000000000000000000000000000000000000000";
 
-    uint64_t const CRYPTONOTE_PUBLIC_ADDRESS_BASE58_PREFIX = 0x3800;
-    uint64_t const CRYPTONOTE_PUBLIC_INTEGRATED_ADDRESS_BASE58_PREFIX = 0x7081;
-    uint64_t const CRYPTONOTE_PUBLIC_SUBADDRESS_BASE58_PREFIX = 0x1080;
-    uint16_t const P2P_DEFAULT_PORT = 17565;
-    uint16_t const RPC_DEFAULT_PORT = 17566;
-    uint16_t const ZMQ_RPC_DEFAULT_PORT = 17567;
+    //hooftly: change prefix, net id, port
+    uint64_t const CRYPTONOTE_PUBLIC_ADDRESS_BASE58_PREFIX = 0x1bf3c9; //amit
+    uint64_t const CRYPTONOTE_PUBLIC_INTEGRATED_ADDRESS_BASE58_PREFIX = 0x5cd49; //aint
+    uint64_t const CRYPTONOTE_PUBLIC_SUBADDRESS_BASE58_PREFIX = 0x29054a; //asub
+    uint16_t const P2P_DEFAULT_PORT = 17111;
+    uint16_t const RPC_DEFAULT_PORT = 17112;
+    uint16_t const ZMQ_RPC_DEFAULT_PORT = 17113;
     boost::uuids::uuid const NETWORK_ID = {{0x12, 0x30, 0xF1, 0x71, 0x61, 0x04, 0x41, 0x61, 0x17, 0x31, 0x00, 0x82, 0x16, 0xA1, 0xA1, 0x12}};
-    std::string const GENESIS_TX = "010a01ff0001ffffffffffff0f029b2e4c0281c0b02e7c53291a94d1d0cbff8883f8024f5142ee494ffbbd0880712101abf318a3dc8d66a0263839cffce83daa85963a27635a608a2ba9973055bcc8e400";
+    std::string const GENESIS_TX = 
+    "011401ff00018080bce2c886ba8a0202b66e8ac4031045b52fa0a5087b78eee30e8877470e820a06282846c6323b2354210121cef3fb1faab36e00e5cf37fe1cb785b09170b25f6fbee37b2da935e82e88ed00";
 
     uint32_t const GENESIS_NONCE = 10000;
 
-    std::set<std::string> const seed_nodes = {
-        "206.81.2.15:17565",
-        "206.81.2.16:17565",
-        "206.81.12.28:17565"
-    };
+    //hooftly: Set seed nodes and an aliases. The seed_node_alias is a ssl enabled url pointing to 
+    //the blacklist and analytics servers. in nerva these operate on the seed nodes, hence the name
+    //if you do not have these set up or don't want them, then leave empty
+    std::set<std::string> const seed_nodes = { };
 
-    std::set<std::string> const seed_node_aliases = {
-        "xnv1.getnerva.org",
-        "xnv2.getnerva.org",
-        "xnv3.getnerva.org"
-    };
+    std::set<std::string> const seed_node_aliases = { };
 
     static const hard_fork hard_forks[] = {
-        { 1,      1},
-        { 2,      2},
-        { 3,      3},
-        { 4,      4},
-        { 5,      5},
-        { 6,  44500},
-        { 7, 173500},
-        { 8, 180000},
-        { 9, 240500},
-        {10, 341000}
+        { 1,   1},
+        { 2, 550},
     };
 
     namespace testnet
     {
-        uint16_t const P2P_DEFAULT_PORT = 18565;
-        uint16_t const RPC_DEFAULT_PORT = 18566;
-        uint16_t const ZMQ_RPC_DEFAULT_PORT = 18567;
+        uint16_t const P2P_DEFAULT_PORT = 18111;
+        uint16_t const RPC_DEFAULT_PORT = 18112;
+        uint16_t const ZMQ_RPC_DEFAULT_PORT = 18113;
         boost::uuids::uuid const NETWORK_ID = {{0x13, 0x22, 0xF0, 0x55, 0x42, 0x18, 0x40, 0x33, 0x16, 0x88, 0x01, 0x92, 0xAA, 0xBC, 0xFF, 0x13}};
 
-        std::set<std::string> const seed_nodes = {
-            "204.48.17.173:18565",
-            "206.81.2.10:18565",
-            "206.81.2.12:18565"
-        };
+        std::set<std::string> const seed_nodes = { };
 
-        std::set<std::string> const seed_node_aliases = {
-            "xnv4.getnerva.org",
-            "xnv5.getnerva.org",
-            "xnv6.getnerva.org"
-        };
+        std::set<std::string> const seed_node_aliases = { };
 
         static const hard_fork hard_forks[] = {
             { 1,   1},
-            { 2,   2},
-            { 3,   3},
-            { 4,   4},
-            { 5,   5},
-            { 6,   6},
-            { 7, 550},
-            { 8, 560},
-            { 9, 570},
-            {10, 580},
-            {11, 590}
+            { 2, 550},
         };
     }
 
     namespace stagenet
     {
-        uint16_t const P2P_DEFAULT_PORT = 19565;
-        uint16_t const RPC_DEFAULT_PORT = 19566;
-        uint16_t const ZMQ_RPC_DEFAULT_PORT = 19567;
-        boost::uuids::uuid const NETWORK_ID = {{0x14, 0x31, 0xF1, 0x22, 0x54, 0x86, 0x36, 0xFF, 0xAB, 0x51, 0x00, 0x4F, 0x3C, 0x3D, 0xAA, 0x16}};
+        uint16_t const P2P_DEFAULT_PORT = 19111;
+        uint16_t const RPC_DEFAULT_PORT = 19112;
+        uint16_t const ZMQ_RPC_DEFAULT_PORT = 19113;
+        boost::uuids::uuid const NETWORK_ID = { {
+            0x14, 0x31, 0xF1, 0x22 , 0x54, 0x86 , 0x36, 0xFF, 0xAB, 0x51, 0x00, 0x3C, 0x3D, 0xAA, 0x16, 0x4F
+        } }; // Bender's daydream
 
         static const hard_fork hard_forks[] = {
             { 1,   1},
-            { 2,   2},
-            { 3,   3},
-            { 4,   4},
-            { 5,   5},
-            { 6,   6},
-            { 7, 550},
-            { 8, 560},
-            { 9, 570},
-            {10, 580},
-            {11, 590}
+            { 2, 550},
         };
     }
 }

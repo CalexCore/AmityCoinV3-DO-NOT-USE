@@ -745,7 +745,7 @@ bool t_command_parser_executor::pop_blocks(const std::vector<std::string>& args)
 
 bool t_command_parser_executor::version(const std::vector<std::string>& args)
 {
-  std::cout << "NERVA '" << MONERO_RELEASE_NAME << "' (v" << MONERO_VERSION_FULL << ")" << std::endl;
+  std::cout << "Amity '" << MONERO_RELEASE_NAME << "' (v" << MONERO_VERSION_FULL << ")" << std::endl;
   return true;
 }
 

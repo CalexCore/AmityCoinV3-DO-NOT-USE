@@ -127,7 +127,7 @@ endif()
 
 set_property(TARGET blockchain_import
 	PROPERTY
-	OUTPUT_NAME "nerva-blockchain-import")
+	OUTPUT_NAME "amity-blockchain-import")
 install(TARGETS blockchain_import DESTINATION bin)
 
 monero_add_executable(blockchain_export
@@ -148,7 +148,7 @@ target_link_libraries(blockchain_export
 
 set_property(TARGET blockchain_export
 	PROPERTY
-	OUTPUT_NAME "nerva-blockchain-export")
+	OUTPUT_NAME "amity-blockchain-export")
 install(TARGETS blockchain_export DESTINATION bin)
 
 monero_add_executable(quicksync_export
@@ -169,7 +169,7 @@ target_link_libraries(quicksync_export
 
 set_property(TARGET quicksync_export
 	PROPERTY
-	OUTPUT_NAME "nerva-quicksync-export")
+	OUTPUT_NAME "amity-quicksync-export")
 install(TARGETS quicksync_export DESTINATION bin)
 
 monero_add_executable(blockchain_blackball
@@ -191,7 +191,7 @@ target_link_libraries(blockchain_blackball
 
 set_property(TARGET blockchain_blackball
 	PROPERTY
-	OUTPUT_NAME "nerva-blockchain-mark-spent-outputs")
+	OUTPUT_NAME "amity-blockchain-mark-spent-outputs")
 install(TARGETS blockchain_blackball DESTINATION bin)
 
 
@@ -213,6 +213,6 @@ target_link_libraries(blockchain_usage
 
 set_property(TARGET blockchain_usage
 	PROPERTY
-	OUTPUT_NAME "nerva-blockchain-usage")
+	OUTPUT_NAME "amity-blockchain-usage")
 install(TARGETS blockchain_usage DESTINATION bin)
 

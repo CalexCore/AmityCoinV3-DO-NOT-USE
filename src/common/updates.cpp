@@ -42,8 +42,12 @@ namespace tools
     std::vector<std::string> records;
     bool found = false;
 
+    //hooftly: to disable dns update checks remove this url
+    //otherwise create a txt at your registrar in the following format
+    //<name>:<build-tag>:<version>:<hash>, i.e
+    //amity:linux-x64:0.0.0.0:<sha256>
     static const std::vector<std::string> dns_urls = {
-      "update.getnerva.org",
+      "update.getamitycoin.org",
     };
 
     if (!tools::dns_utils::load_txt_records_from_dns(records, dns_urls))
@@ -93,6 +97,7 @@ namespace tools
 
   std::string get_update_url(const std::string &software, const std::string &buildtag, const std::string &version)
   {
-    return "https://getnerva.org/content/binaries/" + software + "-v" + version + "_" + buildtag + ".zip";
+    //hooftly: updatew to the url where binaries are hosted
+    return "https://getamitycoin.org/content/binaries/" + software + "-v" + version + "_" + buildtag + ".zip";
   }
 }

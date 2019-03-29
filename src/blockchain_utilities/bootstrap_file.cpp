@@ -43,8 +43,8 @@ using namespace epee;
 namespace
 {
   // This number was picked by taking the leading 4 bytes from this output:
-  // echo NERVA | sha1sum
-  const uint32_t blockchain_raw_magic = 0xff1ea421;
+  // echo Amity | sha1sum
+  const uint32_t blockchain_raw_magic = 0xdbbbe45c;
   const uint32_t header_size = 1024;
 
   std::string refresh_string = "\r                                    \r";

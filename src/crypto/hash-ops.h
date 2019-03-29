@@ -79,7 +79,7 @@ enum {
 };
 
 void cn_fast_hash(const void *data, size_t length, char *hash);
-void cn_slow_hash(const void *data, size_t length, char *hash, int variant, int prehashed, size_t iters);
+void cn_slow_hash(const void *data, size_t length, char *hash, int prehashed);
 
 void hash_extra_blake(const void *data, size_t length, char *hash);
 void hash_extra_groestl(const void *data, size_t length, char *hash);
@@ -108,8 +108,5 @@ typedef struct randomizer_values
   int8_t values[RANDOM_VALUES];
 } random_values;
 
-void  cn_slow_hash_v11(const void *data, size_t length, char *hash, size_t iters, random_values *r, char *sp_bytes, uint8_t init_size_blk, uint16_t xx, uint16_t yy);
-void  cn_slow_hash_v10(const void *data, size_t length, char *hash, size_t iters, random_values *r, char *sp_bytes, uint8_t init_size_blk, uint16_t xx, uint16_t yy, uint16_t zz, uint16_t ww);
-void  cn_slow_hash_v9(const void *data, size_t length, char *hash, size_t iters, random_values *r, char *sp_bytes);
-void  cn_slow_hash_v7_8(const void *data, size_t length, char *hash, size_t iters, random_values *r);
+void  cn_slow_hash_v1(const void *data, size_t length, char *hash, size_t iters, random_values *r, char *sp_bytes, uint8_t init_size_blk, uint16_t xx, uint16_t yy);
 char* get_salt_state(void);

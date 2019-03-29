@@ -275,7 +275,7 @@ namespace cryptonote
         if (version < hshd.top_version && version == m_core.get_ideal_hard_fork_version())
           MCLOG_RED(el::Level::Warning, "global", context << " peer claims higher version (" <<
               (unsigned)hshd.top_version << " for " << (hshd.current_height - 1) << " instead of " << (unsigned)version <<
-              ") - check https://getnerva.org for updates");
+              ") - check https://getamitycoin.org for updates");
         return false;
       }
     }
@@ -1677,7 +1677,7 @@ skip:
     if(m_synchronized.compare_exchange_strong(val_expected, true))
     {
       MGINFO_YELLOW(ENDL << "**********************************************************************" << ENDL
-        << "You are now synchronized with the network. You may now start nerva-wallet-cli." << ENDL
+        << "You are now synchronized with the network. You may now start amity-wallet-cli." << ENDL
         << ENDL
         << "Use the \"help\" command to see the list of available commands." << ENDL
         << "**********************************************************************");

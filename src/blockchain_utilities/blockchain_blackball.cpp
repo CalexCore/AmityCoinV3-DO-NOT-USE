@@ -169,7 +169,7 @@ int main(int argc, char* argv[])
   };
   const command_line::arg_descriptor<std::string> arg_log_level  = {"log-level",  "0-4 or categories", ""};
   const command_line::arg_descriptor<bool> arg_rct_only  = {"rct-only", "Only work on ringCT outputs", false};
-  const command_line::arg_descriptor<std::vector<std::string> > arg_inputs = {"inputs", "Path to NERVA DB, and path to any fork DBs"};
+  const command_line::arg_descriptor<std::vector<std::string> > arg_inputs = {"inputs", "Path to Amity DB, and path to any fork DBs"};
 
   command_line::add_arg(desc_cmd_sett, arg_blackball_db_dir);
   command_line::add_arg(desc_cmd_sett, cryptonote::arg_testnet_on);
@@ -198,12 +198,12 @@ int main(int argc, char* argv[])
 
   if (command_line::get_arg(vm, command_line::arg_help))
   {
-    std::cout << "NERVA '" << MONERO_RELEASE_NAME << "' (v" << MONERO_VERSION_FULL << ")" << ENDL << ENDL;
+    std::cout << "Amity '" << MONERO_RELEASE_NAME << "' (v" << MONERO_VERSION_FULL << ")" << ENDL << ENDL;
     std::cout << desc_options << std::endl;
     return 1;
   }
 
-  mlog_configure(mlog_get_default_log_path("nerva-blockchain-blackball.log"), true);
+  mlog_configure(mlog_get_default_log_path("amity-blockchain-blackball.log"), true);
   if (!command_line::is_arg_defaulted(vm, arg_log_level))
     mlog_set_log(command_line::get_arg(vm, arg_log_level).c_str());
   else

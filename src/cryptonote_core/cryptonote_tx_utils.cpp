@@ -83,7 +83,7 @@ namespace cryptonote
 
     hw::device &hwdev = hw::get_device("default");
     keypair txkey = keypair::generate(hwdev);
- 
+    
     txin_gen in;
     in.height = height;
 
@@ -143,16 +143,62 @@ namespace cryptonote
     out.amount = block_reward;
     out.target = tk;
     tx.vout.push_back(out);
-	
+
     tx.version = CURRENT_TRANSACTION_VERSION;
-    int unlock_window = hard_fork_version >= 6 ? CRYPTONOTE_MINED_MONEY_UNLOCK_WINDOW_V6 : CRYPTONOTE_MINED_MONEY_UNLOCK_WINDOW;
-    tx.unlock_time = height + unlock_window;
+
+    //lock
+    tx.unlock_time = height + CRYPTONOTE_MINED_MONEY_UNLOCK_WINDOW;
     tx.vin.push_back(in);
 
     tx.invalidate_hashes();
 
     //LOG_PRINT("MINER_TX generated ok, block_reward=" << print_money(block_reward) << "("  << print_money(block_reward - fee) << "+" << print_money(fee)
     //  << "), current_block_size=" << current_block_size << ", already_generated_coins=" << already_generated_coins << ", tx_id=" << get_transaction_hash(tx), LOG_LEVEL_2);
+    return true;
+  }
+  //---------------------------------------------------------------
+  bool construct_genesis_tx(transaction& tx) {
+    tx.vin.clear();
+    tx.vout.clear();
+    tx.extra.clear();
+
+    hw::device &hwdev = hw::get_device("default");
+    keypair txkey = keypair::generate(hwdev);
+    keypair sk = keypair::generate(hwdev);
+    keypair vk = keypair::generate(hwdev);
+    
+    txin_gen in;
+    in.height = 0;
+
+    add_tx_pub_key_to_extra(tx, txkey.pub);
+    if (!sort_tx_extra(tx.extra, tx.extra))
+      return false;
+
+    crypto::public_key pk = AUTO_VAL_INIT(pk);
+    epee::string_tools::hex_to_pod(::config::P2P_REMOTE_DEBUG_TRUSTED_PUB_KEY, pk);
+
+    crypto::key_derivation derivation = AUTO_VAL_INIT(derivation);;
+    crypto::public_key out_eph_public_key = AUTO_VAL_INIT(out_eph_public_key);
+    bool r = crypto::generate_key_derivation(vk.pub, txkey.sec, derivation);
+    CHECK_AND_ASSERT_MES(r, false, "while creating outs: failed to generate_key_derivation(" << vk.pub << ", " << txkey.sec << ")");
+
+    r = crypto::derive_public_key(derivation, 0, sk.pub, out_eph_public_key);
+    CHECK_AND_ASSERT_MES(r, false, "while creating outs: failed to derive_public_key(" << derivation << ", " << sk.pub << ")");
+
+    txout_to_key tk;
+    tk.key = out_eph_public_key;
+
+    tx_out out;
+    out.amount = GENESIS_BLOCK_REWARD;
+    out.target = tk;
+    tx.vout.push_back(out);
+
+    tx.version = CURRENT_TRANSACTION_VERSION;
+
+    //lock
+    tx.unlock_time = CRYPTONOTE_MINED_MONEY_UNLOCK_WINDOW;
+    tx.vin.push_back(in);
+    tx.invalidate_hashes();
     return true;
   }
   //---------------------------------------------------------------
@@ -244,8 +290,7 @@ namespace cryptonote
           add_dummy_payment_id = false;
         }
       }
-
-      // we don't add one if we've got more than the usual 1 destination plus change
+ 
       if (destinations.size() > 2)
         add_dummy_payment_id = false;
 

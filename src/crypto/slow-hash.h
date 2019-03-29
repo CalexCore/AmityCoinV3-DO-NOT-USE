@@ -133,24 +133,6 @@ extern void aesb_pseudo_round(const uint8_t *in, uint8_t *out, const uint8_t *ex
     _c = _mm_load_si128(R128(&hp_state[j])); \
     _a = _mm_load_si128(R128(a));
 
-#define post_aes_novariant()                 \
-    _mm_store_si128(R128(c), _c);            \
-    _b = _mm_xor_si128(_b, _c);              \
-    _mm_store_si128(R128(&hp_state[j]), _b); \
-    j = state_index(c);                      \
-    p = U64(&hp_state[j]);                   \
-    b[0] = p[0];                             \
-    b[1] = p[1];                             \
-    __mul();                                 \
-    a[0] += hi;                              \
-    a[1] += lo;                              \
-    p = U64(&hp_state[j]);                   \
-    p[0] = a[0];                             \
-    p[1] = a[1];                             \
-    a[0] ^= b[0];                            \
-    a[1] ^= b[1];                            \
-    _b = _c;
-
 #define post_aes_variant()                   \
     _mm_store_si128(R128(c), _c);            \
     _b = _mm_xor_si128(_b, _c);              \
@@ -169,6 +151,24 @@ extern void aesb_pseudo_round(const uint8_t *in, uint8_t *out, const uint8_t *ex
     a[0] ^= b[0];                            \
     a[1] ^= b[1];                            \
     VARIANT1_2(p + 1);                       \
+    _b = _c;
+
+#define post_aes_novariant()                 \
+    _mm_store_si128(R128(c), _c);            \
+    _b = _mm_xor_si128(_b, _c);              \
+    _mm_store_si128(R128(&hp_state[j]), _b); \
+    j = state_index(c);                      \
+    p = U64(&hp_state[j]);                   \
+    b[0] = p[0];                             \
+    b[1] = p[1];                             \
+    __mul();                                 \
+    a[0] += hi;                              \
+    a[1] += lo;                              \
+    p = U64(&hp_state[j]);                   \
+    p[0] = a[0];                             \
+    p[1] = a[1];                             \
+    a[0] ^= b[0];                            \
+    a[1] ^= b[1];                            \
     _b = _c;
 
 #define init_hash()                                                             \

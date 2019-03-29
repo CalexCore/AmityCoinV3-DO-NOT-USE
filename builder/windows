@@ -1,7 +1,7 @@
 #!/bin/bash
 
 BUILDER_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-NERVA_DIR=$(dirname $BUILDER_DIR)
+AMITY_DIR=$(dirname $BUILDER_DIR)
 source ${BUILDER_DIR}/helpers
 
 detectos
@@ -12,4 +12,4 @@ cd ${BUILDER_DIR}/build/release
 cmake -D CMAKE_BUILD_TYPE=release -D STATIC=ON -D BUILD_TAG="windows-x64" -D ARCH="x86-64" -G "MSYS Makefiles" ../../..
 make -j4
 
-zip -rj ${NERVA_DIR}/${REPO_NAME}-v${NERVA_VERSION}_windows-x64.zip ${BUILDER_DIR}/build/release/bin/*
+zip -rj ${AMITY_DIR}/${REPO_NAME}-v${AMITY_VERSION}_windows-x64.zip ${BUILDER_DIR}/build/release/bin/*

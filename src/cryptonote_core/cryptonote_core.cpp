@@ -154,7 +154,7 @@ namespace cryptonote
   };
   static const command_line::arg_descriptor<std::string> arg_check_updates = {
     "check-updates"
-  , "Check for new versions of nerva: [disabled|notify|download|update]"
+  , "Check for new versions of amity: [disabled|notify|download|update]"
   , "notify"
   };
   static const command_line::arg_descriptor<size_t> arg_max_txpool_size  = {
@@ -432,8 +432,8 @@ namespace cryptonote
       if (boost::filesystem::exists(old_files / "blockchain.bin"))
       {
         MWARNING("Found old-style blockchain.bin in " << old_files.string());
-        MWARNING("NERVA now uses a new format. You can either remove blockchain.bin to start syncing");
-        MWARNING("the blockchain anew, or use nerva-blockchain-export and nerva-blockchain-import to");
+        MWARNING("Amity now uses a new format. You can either remove blockchain.bin to start syncing");
+        MWARNING("the blockchain anew, or use amity-blockchain-export and amity-blockchain-import to");
         MWARNING("convert your existing blockchain.bin to the new format. See README.md for instructions.");
         return false;
       }
@@ -1514,22 +1514,19 @@ namespace cryptonote
     {
       std::string main_message;
       if (m_offline)
-        main_message = "The daemon is running offline and will not attempt to sync to the NERVA network.";
+        main_message = "The daemon is running offline and will not attempt to sync to the Amity network.";
       else
         main_message = "The daemon will start synchronizing with the network. This may take a long time to complete.";
 
+      //hooftly: change ascii art if you want
       MGINFO_GREEN(ENDL 
-        << R"(__________________________________________________________________________________________          )" << ENDL
-        << R"(___/\\\\\_____/\\\__/\\\\\\\\\\\\\\\____/\\\\\\\\\______/\\\________/\\\_____/\\\\\\\\\____         )" << ENDL
-        << R"(___\/\\\\\\___\/\\\_\/\\\///////////___/\\\///////\\\___\/\\\_______\/\\\___/\\\\\\\\\\\\\__        )" << ENDL
-        << R"(____\/\\\/\\\__\/\\\_\/\\\_____________\/\\\_____\/\\\___\//\\\______/\\\___/\\\/////////\\\_       )" << ENDL
-        << R"(_____\/\\\//\\\_\/\\\_\/\\\\\\\\\\\_____\/\\\\\\\\\\\/_____\//\\\____/\\\___\/\\\_______\/\\\_      )" << ENDL
-        << R"(______\/\\\\//\\\\/\\\_\/\\\///////______\/\\\//////\\\______\//\\\__/\\\____\/\\\\\\\\\\\\\\\_     )" << ENDL
-        << R"(_______\/\\\_\//\\\/\\\_\/\\\_____________\/\\\____\//\\\______\//\\\/\\\_____\/\\\/////////\\\_    )" << ENDL
-        << R"(________\/\\\__\//\\\\\\_\/\\\_____________\/\\\_____\//\\\______\//\\\\\______\/\\\_______\/\\\_   )" << ENDL
-        << R"(_________\/\\\___\//\\\\\_\/\\\\\\\\\\\\\\\_\/\\\______\//\\\______\//\\\_______\/\\\_______\/\\\_  )" << ENDL
-        << R"(__________\///_____\/////__\///////////////__\///________\///________\///________\///________\///__ )" << ENDL
-        << R"(____________________________________________________________________________________________________)" << ENDL);
+        << R"(    ___              _ __                   _      )" << ENDL
+        << R"(   /   |  ____ ___  (_) /___  ___________  (_)___  )" << ENDL
+        << R"(  / /| | / __ `__ \/ / __/ / / / ___/ __ \/ / __ \ )" << ENDL
+        << R"( / ___ |/ / / / / / / /_/ /_/ / /__/ /_/ / / / / / )" << ENDL
+        << R"(/_/  |_/_/ /_/ /_/_/\__/\__, /\___/\____/_/_/ /_/  )" << ENDL
+        << R"(                       /____/                      )" << ENDL);
+        
       MGINFO_YELLOW(ENDL
         << main_message << ENDL
         << "Use the \"help\" command to see the list of available commands." << ENDL
@@ -1567,7 +1564,7 @@ namespace cryptonote
   //-----------------------------------------------------------------------------------------------
   bool core::check_updates()
   {
-    static const char software[] = "nerva";
+    static const char software[] = "amity";
 #ifdef BUILD_TAG
     static const char buildtag[] = BOOST_PP_STRINGIZE(BUILD_TAG);
 #else

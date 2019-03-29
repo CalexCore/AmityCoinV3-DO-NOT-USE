@@ -90,7 +90,7 @@ typedef cryptonote::simple_wallet sw;
 
 #define MIN_RING_SIZE DEFAULT_RINGSIZE // Used to inform user about min ring size -- does not track actual protocol
 
-#define OUTPUT_EXPORT_FILE_MAGIC "NERVA output export\003"
+#define OUTPUT_EXPORT_FILE_MAGIC "Amity output export\003"
 
 #define LOCK_IDLE_SCOPE() \
   bool auto_refresh_enabled = m_auto_refresh_enabled.load(std::memory_order_relaxed); \
@@ -132,7 +132,7 @@ namespace
   const command_line::arg_descriptor<bool> arg_trusted_daemon = {"trusted-daemon", sw::tr("Enable commands which rely on a trusted daemon"), false};
   const command_line::arg_descriptor<bool> arg_allow_mismatched_daemon_version = {"allow-mismatched-daemon-version", sw::tr("Allow communicating with a daemon that uses a different RPC version"), false};
   const command_line::arg_descriptor<uint64_t> arg_restore_height = {"restore-height", sw::tr("Restore from specific blockchain height"), 0};
-  const command_line::arg_descriptor<bool> arg_do_not_relay = {"do-not-relay", sw::tr("The newly created transaction will not be relayed to the NERVA network"), false};
+  const command_line::arg_descriptor<bool> arg_do_not_relay = {"do-not-relay", sw::tr("The newly created transaction will not be relayed to the Amity network"), false};
   const command_line::arg_descriptor<bool> arg_create_address_file = {"create-address-file", sw::tr("Create an address file for new wallets"), false};
   const command_line::arg_descriptor<std::string> arg_subaddress_lookahead = {"subaddress-lookahead", tools::wallet2::tr("Set subaddress lookahead sizes to <major>:<minor>"), ""};
   const command_line::arg_descriptor<bool> arg_use_english_language_names = {"use-english-language-names", sw::tr("Display English language names"), false};
@@ -332,7 +332,7 @@ namespace
     std::stringstream prompt;
     prompt << sw::tr("For URL: ") << url
            << ", " << dnssec_str << std::endl
-           << sw::tr(" NERVA Address = ") << addresses[0]
+           << sw::tr(" Amity Address = ") << addresses[0]
            << std::endl
            << sw::tr("Is this OK? (Y/n) ")
     ;
@@ -782,7 +782,7 @@ bool simple_wallet::print_fee_info(const std::vector<std::string> &args/* = std:
   }
   const uint64_t per_kb_fee = m_wallet->get_per_kb_fee();
   const uint64_t typical_size_kb = 13;
-  message_writer() << (boost::format(tr("Current fee is %s NERVA per kB")) % print_money(per_kb_fee)).str();
+  message_writer() << (boost::format(tr("Current fee is %s Amity per kB")) % print_money(per_kb_fee)).str();
 
   std::vector<uint64_t> fees;
   for (uint32_t priority = 1; priority <= 3; ++priority)
@@ -1307,7 +1307,7 @@ bool simple_wallet::export_raw_multisig(const std::vector<std::string> &args)
     for (auto &ptx: txs.m_ptx)
     {
       const crypto::hash txid = cryptonote::get_transaction_hash(ptx.tx);
-      const std::string filename = std::string("raw_multisig_nerva_tx_") + epee::string_tools::pod_to_hex(txid);
+      const std::string filename = std::string("raw_multisig_amity_tx_") + epee::string_tools::pod_to_hex(txid);
       if (!filenames.empty())
         filenames += ", ";
       filenames += filename;
@@ -1799,15 +1799,15 @@ bool simple_wallet::set_unit(const std::vector<std::string> &args/* = std::vecto
   const std::string &unit = args[1];
   unsigned int decimal_point = CRYPTONOTE_DISPLAY_DECIMAL_POINT;
 
-  if (unit == "nerva")
+  if (unit == "amit")
     decimal_point = CRYPTONOTE_DISPLAY_DECIMAL_POINT;
-  else if (unit == "millinerva")
+  else if (unit == "milliamit")
     decimal_point = CRYPTONOTE_DISPLAY_DECIMAL_POINT - 3;
-  else if (unit == "micronerva")
+  else if (unit == "microamit")
     decimal_point = CRYPTONOTE_DISPLAY_DECIMAL_POINT - 6;
-  else if (unit == "nanonerva")
+  else if (unit == "nanoamit")
     decimal_point = CRYPTONOTE_DISPLAY_DECIMAL_POINT - 9;
-  else if (unit == "piconerva")
+  else if (unit == "picoamit")
     decimal_point = 0;
   else
   {
@@ -2107,7 +2107,7 @@ simple_wallet::simple_wallet()
   m_cmd_binder.set_handler("donate",
                            boost::bind(&simple_wallet::donate, this, _1),
                            tr("donate [index=<N1>[,<N2>,...]] [<priority>] <amount> [<payment_id>]"),
-                           tr("Donate <amount> to the development team (getnerva.org)."));
+                           tr("Donate <amount> to the development team (getamitycoin.org)."));
   m_cmd_binder.set_handler("sign_transfer",
                            boost::bind(&simple_wallet::sign_transfer, this, _1),
                            tr("sign_transfer <file>"),
@@ -2184,8 +2184,8 @@ simple_wallet::simple_wallet()
                                   "  Set the fee too default/low/medium/high.\n "
                                   "confirm-missing-payment-id <1|0>\n "
                                   "ask-password <1|0>\n "
-                                  "unit <nerva|millinerva|micronerva|nanonerva|piconerva>\n "
-                                  "  Set the default NERVA (sub-)unit.\n "
+                                  "unit <amity|milliamit|microamit|nanoamit|picoamit>\n "
+                                  "  Set the default Amity (sub-)unit.\n "
                                   "min-outputs-count [n]\n "
                                   "  Try to keep at least that many outputs of value at least min-outputs-value.\n "
                                   "min-outputs-value [n]\n "
@@ -2201,12 +2201,12 @@ simple_wallet::simple_wallet()
                                   "auto-low-priority <1|0>\n "
                                   "  Whether to automatically use the low priority fee level when it's safe to do so.\n "
                                   "segregate-pre-fork-outputs <1|0>\n "
-                                  "  Set this if you intend to spend outputs on both NERVA AND a key reusing fork.\n "
+                                  "  Set this if you intend to spend outputs on both Amity AND a key reusing fork.\n "
                                   "key-reuse-mitigation2 <1|0>\n "
-                                  "  Set this if you are not sure whether you will spend on a key reusing NERVA fork later.\n"
+                                  "  Set this if you are not sure whether you will spend on a key reusing Amity fork later.\n"
                                   "subaddress-lookahead <major>:<minor>\n "
                                   "  Set the lookahead sizes for the subaddress hash table.\n "
-                                  "  Set this if you are not sure whether you will spend on a key reusing NERVA fork later.\n "
+                                  "  Set this if you are not sure whether you will spend on a key reusing Amity fork later.\n "
                                   "segregation-height <n>\n "
                                   "  Set to the height of a key reusing fork you want to use, 0 to use default."));
   m_cmd_binder.set_handler("encrypted_seed",
@@ -2463,7 +2463,7 @@ bool simple_wallet::set_variable(const std::vector<std::string> &args)
     CHECK_SIMPLE_VARIABLE("priority", set_default_priority, tr("0, 1, 2, or 3") << join_priority_strings(", "));
     CHECK_SIMPLE_VARIABLE("confirm-missing-payment-id", set_confirm_missing_payment_id, tr("0 or 1"));
     CHECK_SIMPLE_VARIABLE("ask-password", set_ask_password, tr("0 or 1"));
-    CHECK_SIMPLE_VARIABLE("unit", set_unit, tr("nerva, millinerva, micronerva, nanonerva, piconerva"));
+    CHECK_SIMPLE_VARIABLE("unit", set_unit, tr("amity, milliamit, microamit, nanoamit, picoamit"));
     CHECK_SIMPLE_VARIABLE("min-outputs-count", set_min_output_count, tr("unsigned integer"));
     CHECK_SIMPLE_VARIABLE("min-outputs-value", set_min_output_value, tr("amount"));
     CHECK_SIMPLE_VARIABLE("merge-destinations", set_merge_destinations, tr("0 or 1"));
@@ -3411,7 +3411,7 @@ boost::optional<epee::wipeable_string> simple_wallet::new_wallet(const boost::pr
     "To start synchronizing with the daemon, use the \"refresh\" command.\n"
     "Use the \"help\" command to see the list of available commands.\n"
     "Use \"help <command>\" to see a command's documentation.\n"
-    "Always use the \"exit\" command when closing nerva-wallet-cli to save \n"
+    "Always use the \"exit\" command when closing amity-wallet-cli to save \n"
     "your current session's state. Otherwise, you might need to synchronize \n"
     "your wallet again (your wallet keys are NOT at risk in any case).\n")
   ;
@@ -4805,14 +4805,14 @@ bool simple_wallet::transfer_main(int transfer_type, const std::vector<std::stri
     // actually commit the transactions
     if (m_wallet->multisig())
     {
-      bool r = m_wallet->save_multisig_tx(ptx_vector, "multisig_nerva_tx");
+      bool r = m_wallet->save_multisig_tx(ptx_vector, "multisig_amity_tx");
       if (!r)
       {
         fail_msg_writer() << tr("Failed to write transaction(s) to file");
       }
       else
       {
-        success_msg_writer(true) << tr("Unsigned transaction(s) successfully written to file: ") << "multisig_nerva_tx";
+        success_msg_writer(true) << tr("Unsigned transaction(s) successfully written to file: ") << "multisig_amity_tx";
       }
     }
     else if (m_wallet->get_account().get_device().has_tx_cold_sign())
@@ -4841,14 +4841,14 @@ bool simple_wallet::transfer_main(int transfer_type, const std::vector<std::stri
     }
     else if (m_wallet->watch_only())
     {
-      bool r = m_wallet->save_tx(ptx_vector, "unsigned_nerva_tx");
+      bool r = m_wallet->save_tx(ptx_vector, "unsigned_amity_tx");
       if (!r)
       {
         fail_msg_writer() << tr("Failed to write transaction(s) to file");
       }
       else
       {
-        success_msg_writer(true) << tr("Unsigned transaction(s) successfully written to file: ") << "unsigned_nerva_tx";
+        success_msg_writer(true) << tr("Unsigned transaction(s) successfully written to file: ") << "unsigned_amity_tx";
       }
     }
     else
@@ -5064,14 +5064,14 @@ bool simple_wallet::sweep_main(uint64_t below, const std::vector<std::string> &a
     // actually commit the transactions
     if (m_wallet->multisig())
     {
-      bool r = m_wallet->save_multisig_tx(ptx_vector, "multisig_nerva_tx");
+      bool r = m_wallet->save_multisig_tx(ptx_vector, "multisig_amity_tx");
       if (!r)
       {
         fail_msg_writer() << tr("Failed to write transaction(s) to file");
       }
       else
       {
-        success_msg_writer(true) << tr("Unsigned transaction(s) successfully written to file: ") << "multisig_nerva_tx";
+        success_msg_writer(true) << tr("Unsigned transaction(s) successfully written to file: ") << "multisig_amity_tx";
       }
     }
     else if (m_wallet->get_account().get_device().has_tx_cold_sign())
@@ -5101,14 +5101,14 @@ bool simple_wallet::sweep_main(uint64_t below, const std::vector<std::string> &a
     }
     else if (m_wallet->watch_only())
     {
-      bool r = m_wallet->save_tx(ptx_vector, "unsigned_nerva_tx");
+      bool r = m_wallet->save_tx(ptx_vector, "unsigned_amity_tx");
       if (!r)
       {
         fail_msg_writer() << tr("Failed to write transaction(s) to file");
       }
       else
       {
-        success_msg_writer(true) << tr("Unsigned transaction(s) successfully written to file: ") << "unsigned_nerva_tx";
+        success_msg_writer(true) << tr("Unsigned transaction(s) successfully written to file: ") << "unsigned_amity_tx";
       }
     }
     else
@@ -5272,26 +5272,26 @@ bool simple_wallet::sweep_single(const std::vector<std::string> &args_)
     // actually commit the transactions
     if (m_wallet->multisig())
     {
-      bool r = m_wallet->save_multisig_tx(ptx_vector, "multisig_nerva_tx");
+      bool r = m_wallet->save_multisig_tx(ptx_vector, "multisig_amity_tx");
       if (!r)
       {
         fail_msg_writer() << tr("Failed to write transaction(s) to file");
       }
       else
       {
-        success_msg_writer(true) << tr("Unsigned transaction(s) successfully written to file: ") << "multisig_nerva_tx";
+        success_msg_writer(true) << tr("Unsigned transaction(s) successfully written to file: ") << "multisig_amity_tx";
       }
     }
     else if (m_wallet->watch_only())
     {
-      bool r = m_wallet->save_tx(ptx_vector, "unsigned_nerva_tx");
+      bool r = m_wallet->save_tx(ptx_vector, "unsigned_amity_tx");
       if (!r)
       {
         fail_msg_writer() << tr("Failed to write transaction(s) to file");
       }
       else
       {
-        success_msg_writer(true) << tr("Unsigned transaction(s) successfully written to file: ") << "unsigned_nerva_tx";
+        success_msg_writer(true) << tr("Unsigned transaction(s) successfully written to file: ") << "unsigned_amity_tx";
       }
     }
     else
@@ -5368,7 +5368,7 @@ bool simple_wallet::donate(const std::vector<std::string> &args_)
   local_args.push_back(amount_str);
   if (!payment_id_str.empty())
     local_args.push_back(payment_id_str);
-  message_writer() << (boost::format(tr("Donating %s %s to The NERVA Project (getnerva.org / %s ).")) % amount_str % cryptonote::get_unit(cryptonote::get_default_decimal_point()) % XNV_DONATION_ADDR).str(); 
+  message_writer() << (boost::format(tr("Donating %s %s to The Amity Project (getamitycoin.org / %s ).")) % amount_str % cryptonote::get_unit(cryptonote::get_default_decimal_point()) % XNV_DONATION_ADDR).str(); 
   transfer(local_args);
   return true;
 }
@@ -5549,7 +5549,7 @@ bool simple_wallet::sign_transfer(const std::vector<std::string> &args_)
   std::vector<tools::wallet2::pending_tx> ptx;
   try
   {
-    bool r = m_wallet->sign_tx("unsigned_nerva_tx", "signed_nerva_tx", ptx, [&](const tools::wallet2::unsigned_tx_set &tx){ return accept_loaded_tx(tx); }, export_raw);
+    bool r = m_wallet->sign_tx("unsigned_amity_tx", "signed_amity_tx", ptx, [&](const tools::wallet2::unsigned_tx_set &tx){ return accept_loaded_tx(tx); }, export_raw);
     if (!r)
     {
       fail_msg_writer() << tr("Failed to sign transaction");
@@ -5569,7 +5569,7 @@ bool simple_wallet::sign_transfer(const std::vector<std::string> &args_)
       txids_as_text += (", ");
     txids_as_text += epee::string_tools::pod_to_hex(get_transaction_hash(t.tx));
   }
-  success_msg_writer(true) << tr("Transaction successfully signed to file ") << "signed_nerva_tx" << ", txid " << txids_as_text;
+  success_msg_writer(true) << tr("Transaction successfully signed to file ") << "signed_amity_tx" << ", txid " << txids_as_text;
   if (export_raw)
   {
     std::string rawfiles_as_text;
@@ -5577,7 +5577,7 @@ bool simple_wallet::sign_transfer(const std::vector<std::string> &args_)
     {
       if (i > 0)
         rawfiles_as_text += ", ";
-      rawfiles_as_text += "signed_nerva_tx_raw" + (ptx.size() == 1 ? "" : ("_" + std::to_string(i)));
+      rawfiles_as_text += "signed_amity_tx_raw" + (ptx.size() == 1 ? "" : ("_" + std::to_string(i)));
     }
     success_msg_writer(true) << tr("Transaction raw hex data exported to ") << rawfiles_as_text;
   }
@@ -5597,7 +5597,7 @@ bool simple_wallet::submit_transfer(const std::vector<std::string> &args_)
   try
   {
     std::vector<tools::wallet2::pending_tx> ptx_vector;
-    bool r = m_wallet->load_tx("signed_nerva_tx", ptx_vector, [&](const tools::wallet2::signed_tx_set &tx){ return accept_loaded_tx(tx); });
+    bool r = m_wallet->load_tx("signed_amity_tx", ptx_vector, [&](const tools::wallet2::signed_tx_set &tx){ return accept_loaded_tx(tx); });
     if (!r)
     {
       fail_msg_writer() << tr("Failed to load transaction from file");
@@ -5692,7 +5692,7 @@ bool simple_wallet::get_tx_proof(const std::vector<std::string> &args)
   try
   {
     std::string sig_str = m_wallet->get_tx_proof(txid, info.address, info.is_subaddress, args.size() == 3 ? args[2] : "");
-    const std::string filename = "nerva_tx_proof";
+    const std::string filename = "amity_tx_proof";
     if (epee::file_io_utils::save_string_to_file(filename, sig_str))
       success_msg_writer() << tr("signature file saved to: ") << filename;
     else
@@ -5907,7 +5907,7 @@ bool simple_wallet::get_spend_proof(const std::vector<std::string> &args)
   try
   {
     const std::string sig_str = m_wallet->get_spend_proof(txid, args.size() == 2 ? args[1] : "");
-    const std::string filename = "nerva_spend_proof";
+    const std::string filename = "amity_spend_proof";
     if (epee::file_io_utils::save_string_to_file(filename, sig_str))
       success_msg_writer() << tr("signature file saved to: ") << filename;
     else
@@ -6002,7 +6002,7 @@ bool simple_wallet::get_reserve_proof(const std::vector<std::string> &args)
   try
   {
     const std::string sig_str = m_wallet->get_reserve_proof(account_minreserve, args.size() == 2 ? args[1] : "");
-    const std::string filename = "nerva_reserve_proof";
+    const std::string filename = "amity_reserve_proof";
     if (epee::file_io_utils::save_string_to_file(filename, sig_str))
       success_msg_writer() << tr("signature file saved to: ") << filename;
     else
@@ -7579,7 +7579,7 @@ void simple_wallet::commit_or_save(std::vector<tools::wallet2::pending_tx>& ptx_
       cryptonote::blobdata blob;
       tx_to_blob(ptx.tx, blob);
       const std::string blob_hex = epee::string_tools::buff_to_hex_nodelimer(blob);
-      const std::string filename = "raw_nerva_tx" + (ptx_vector.size() == 1 ? "" : ("_" + std::to_string(i++)));
+      const std::string filename = "raw_amity_tx" + (ptx_vector.size() == 1 ? "" : ("_" + std::to_string(i++)));
       if (epee::file_io_utils::save_string_to_file(filename, blob_hex))
         success_msg_writer(true) << tr("Transaction successfully saved to ") << filename << tr(", txid ") << txid;
       else
@@ -7636,12 +7636,12 @@ int main(int argc, char* argv[])
   bool should_terminate = false;
   std::tie(vm, should_terminate) = wallet_args::main(
    argc, argv,
-   "nerva-wallet-cli [--wallet-file=<file>|--generate-new-wallet=<file>] [<COMMAND>]",
-    sw::tr("This is the command line NERVA wallet. It needs to connect to a NERVA daemon to work correctly."),
+   "amity-wallet-cli [--wallet-file=<file>|--generate-new-wallet=<file>] [<COMMAND>]",
+    sw::tr("This is the command line Amity wallet. It needs to connect to a Amity daemon to work correctly."),
     desc_params,
     positional_options,
     [](const std::string &s, bool emphasis){ tools::scoped_message_writer(emphasis ? epee::console_color_white : epee::console_color_default, true) << s; },
-    "nerva-wallet-cli.log"
+    "amity-wallet-cli.log"
   );
 
   if (!vm)

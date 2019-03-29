@@ -35,7 +35,7 @@
 
 namespace daemon_args
 {
-  std::string const WINDOWS_SERVICE_NAME = "NERVA Daemon";
+  std::string const WINDOWS_SERVICE_NAME = "Amity Daemon";
 
   const command_line::arg_descriptor<std::string, false, true, 2> arg_config_file = {
     "config-file"
@@ -85,6 +85,10 @@ namespace daemon_args
   const command_line::arg_descriptor<std::vector<std::string>> arg_command = {
     "daemon_command"
   , "Hidden"
+  };
+  const command_line::arg_descriptor<bool> arg_create_genesis_tx = {
+    "create-genesis-tx"
+  , "You shouldn't need help"
   };
   const command_line::arg_descriptor<bool> arg_os_version = {
     "os-version"

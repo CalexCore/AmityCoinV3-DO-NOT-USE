@@ -85,7 +85,7 @@ using namespace cryptonote;
 #undef MONERO_DEFAULT_LOG_CATEGORY
 #define MONERO_DEFAULT_LOG_CATEGORY "wallet.wallet2"
 
-#define OUTPUT_EXPORT_FILE_MAGIC "NERVA output export\003"
+#define OUTPUT_EXPORT_FILE_MAGIC "Amity output export\003"
 
 // used to choose when to stop adding outputs to a tx
 #define APPROXIMATE_INPUT_BYTES 80
@@ -96,9 +96,9 @@ using namespace cryptonote;
 // arbitrary, used to generate different hashes from the same input
 #define CACHE_KEY_TAIL 0x8e
 
-#define UNSIGNED_TX_PREFIX "NERVA unsigned tx set\004"
-#define SIGNED_TX_PREFIX "NERVA signed tx set\004"
-#define MULTISIG_UNSIGNED_TX_PREFIX "NERVA multisig unsigned tx set\001"
+#define UNSIGNED_TX_PREFIX "Amity unsigned tx set\004"
+#define SIGNED_TX_PREFIX "Amity signed tx set\004"
+#define MULTISIG_UNSIGNED_TX_PREFIX "Amity multisig unsigned tx set\001"
 
 #define RECENT_OUTPUT_RATIO (0.5) // 50% of outputs are from the recent zone
 #define RECENT_OUTPUT_DAYS (1.8) // last 1.8 day makes up the recent zone (taken from monerolink.pdf, Miller et al)
@@ -112,9 +112,9 @@ using namespace cryptonote;
 #define SUBADDRESS_LOOKAHEAD_MAJOR 50
 #define SUBADDRESS_LOOKAHEAD_MINOR 200
 
-#define KEY_IMAGE_EXPORT_FILE_MAGIC "NERVA key image export\002"
+#define KEY_IMAGE_EXPORT_FILE_MAGIC "Amity key image export\002"
 
-#define MULTISIG_EXPORT_FILE_MAGIC "NERVA multisig export\001"
+#define MULTISIG_EXPORT_FILE_MAGIC "Amity multisig export\001"
 
 #define SEGREGATION_FORK_HEIGHT 1564965
 #define TESTNET_SEGREGATION_FORK_HEIGHT 1000000
@@ -1250,8 +1250,8 @@ void wallet2::scan_output(const cryptonote::transaction &tx, bool miner_tx, cons
     if (!m_encrypt_keys_after_refresh)
     {
       boost::optional<epee::wipeable_string> pwd = m_callback->on_get_password("output received");
-      THROW_WALLET_EXCEPTION_IF(!pwd, error::password_needed, tr("Password is needed to compute key image for incoming nerva"));
-      THROW_WALLET_EXCEPTION_IF(!verify_password(*pwd), error::password_needed, tr("Invalid password: password is needed to compute key image for incoming nerva"));
+      THROW_WALLET_EXCEPTION_IF(!pwd, error::password_needed, tr("Password is needed to compute key image for incoming amity"));
+      THROW_WALLET_EXCEPTION_IF(!verify_password(*pwd), error::password_needed, tr("Invalid password: password is needed to compute key image for incoming amity"));
       decrypt_keys(*pwd);
       m_encrypt_keys_after_refresh = *pwd;
     }
@@ -6421,7 +6421,7 @@ void wallet2::get_outs(std::vector<std::vector<tools::wallet2::get_outs_entry>> 
       const uint64_t amount = td.is_rct() ? 0 : td.amount();
       std::unordered_set<uint64_t> seen_indices;
       // request more for rct in base recent (locked) coinbases are picked, since they're locked for longer
-      size_t requested_outputs_count = base_requested_outputs_count + (td.is_rct() ? CRYPTONOTE_MINED_MONEY_UNLOCK_WINDOW_V6 - CRYPTONOTE_DEFAULT_TX_SPENDABLE_AGE : 0);
+      size_t requested_outputs_count = base_requested_outputs_count + (td.is_rct() ? CRYPTONOTE_MINED_MONEY_UNLOCK_WINDOW - CRYPTONOTE_DEFAULT_TX_SPENDABLE_AGE : 0);
       size_t start = req.outputs.size();
 
       const bool output_is_pre_fork = td.m_block_height < segregation_fork_height;
@@ -6657,7 +6657,7 @@ void wallet2::get_outs(std::vector<std::vector<tools::wallet2::get_outs_entry>> 
     for(size_t idx: selected_transfers)
     {
       const transfer_details &td = m_transfers[idx];
-      size_t requested_outputs_count = base_requested_outputs_count + (td.is_rct() ? CRYPTONOTE_MINED_MONEY_UNLOCK_WINDOW_V6 - CRYPTONOTE_DEFAULT_TX_SPENDABLE_AGE : 0);
+      size_t requested_outputs_count = base_requested_outputs_count + (td.is_rct() ? CRYPTONOTE_MINED_MONEY_UNLOCK_WINDOW - CRYPTONOTE_DEFAULT_TX_SPENDABLE_AGE : 0);
       outs.push_back(std::vector<get_outs_entry>());
       outs.back().reserve(fake_outputs_count + 1);
       const rct::key mask = td.is_rct() ? rct::commit(td.amount(), td.m_mask, v2) : rct::zeroCommit(td.amount(), v2);
@@ -10890,7 +10890,7 @@ std::string wallet2::make_uri(const std::string &address, const std::string &pay
     }
   }
 
-  std::string uri = "nerva:" + address;
+  std::string uri = "amity:" + address;
   unsigned int n_fields = 0;
 
   if (!payment_id.empty())
@@ -10919,9 +10919,9 @@ std::string wallet2::make_uri(const std::string &address, const std::string &pay
 //----------------------------------------------------------------------------------------------------
 bool wallet2::parse_uri(const std::string &uri, std::string &address, std::string &payment_id, uint64_t &amount, std::string &tx_description, std::string &recipient_name, std::vector<std::string> &unknown_parameters, std::string &error)
 {
-  if (uri.substr(0, 6) != "nerva:")
+  if (uri.substr(0, 6) != "amity:")
   {
-    error = std::string("URI has wrong scheme (expected \"nerva:\"): ") + uri;
+    error = std::string("URI has wrong scheme (expected \"amity:\"): ") + uri;
     return false;
   }
 
