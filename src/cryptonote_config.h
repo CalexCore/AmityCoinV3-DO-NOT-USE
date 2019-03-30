@@ -56,17 +56,24 @@
 #define BLOCKCHAIN_TIMESTAMP_CHECK_WINDOW               12
 #define CRYPTONOTE_BLOCK_FUTURE_TIME_LIMIT              60*5
 
-#define BLOCK_REWARD                                    ((uint64_t)100000000)       //100 amit
-#define GENESIS_BLOCK_REWARD                            ((uint64_t)100000000000)    //100k amit
-#define PER_KB_BASE_FEE                                 ((uint64_t)500000)          //0.5 amit                           
+
+#define MONEY_SUPPLY                                    ((uint64_t)(-1))
+#define EMISSION_SPEED_FACTOR_PER_MINUTE                (23)
+#define FINAL_SUBSIDY_PER_MINUTE                        ((uint64_t)300000000000) // 3 * pow(10, 11)
+#define GENESIS_BLOCK_REWARD                            ((uint64_t)150000000000000000)                            
 
 #define CRYPTONOTE_REWARD_BLOCKS_WINDOW                 100
-#define CRYPTONOTE_BLOCK_GRANTED_FULL_REWARD_ZONE       300000
+#define CRYPTONOTE_BLOCK_GRANTED_FULL_REWARD_ZONE_V1    300000
+#define CRYPTONOTE_BLOCK_GRANTED_FULL_REWARD_ZONE_V2    CRYPTONOTE_BLOCK_GRANTED_FULL_REWARD_ZONE_V1
 #define CRYPTONOTE_COINBASE_BLOB_RESERVED_SIZE          600
-#define CRYPTONOTE_DISPLAY_DECIMAL_POINT                6
+#define CRYPTONOTE_DISPLAY_DECIMAL_POINT                9
+// COIN - number of smallest units in one coin
+#define COIN                                            ((uint64_t)1000000000000) // pow(10, 12)
 
 #define DEFAULT_MIXIN                                   4
 #define DEFAULT_RINGSIZE                                DEFAULT_MIXIN + 1
+#define DYNAMIC_FEE_PER_KB_BASE_FEE                     ((uint64_t)400000000) // 4 * pow(10,8)))
+#define DYNAMIC_FEE_PER_KB_BASE_BLOCK_REWARD            ((uint64_t)10000000000000) // 10 * pow(10,12)
 
 #define DIFFICULTY_TARGET                               60  // seconds
 
@@ -127,6 +134,7 @@
 #define MINER_CONFIG_FILE_NAME                          "miner_conf.json"
 
 #define THREAD_STACK_SIZE                               5 * 1024 * 1024
+#define PER_KB_FEE_QUANTIZATION_DECIMALS                8
 #define HASH_OF_HASHES_STEP                             256
 #define DEFAULT_TXPOOL_MAX_SIZE                         648000000ull // 3 days at 300000, in bytes
 

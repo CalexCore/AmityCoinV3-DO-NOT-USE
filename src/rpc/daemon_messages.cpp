@@ -864,11 +864,18 @@ void GetRPCVersion::Response::fromJson(rapidjson::Value& val)
 
 rapidjson::Value GetPerKBFeeEstimate::Request::toJson(rapidjson::Document& doc) const
 {
-  return Message::toJson(doc);
+  auto val = Message::toJson(doc);
+
+  auto& al = doc.GetAllocator();
+
+  INSERT_INTO_JSON_OBJECT(val, doc, num_grace_blocks, num_grace_blocks);
+
+  return val;
 }
 
 void GetPerKBFeeEstimate::Request::fromJson(rapidjson::Value& val)
 {
+  GET_FROM_JSON_OBJECT(val, num_grace_blocks, num_grace_blocks);
 }
 
 rapidjson::Value GetPerKBFeeEstimate::Response::toJson(rapidjson::Document& doc) const

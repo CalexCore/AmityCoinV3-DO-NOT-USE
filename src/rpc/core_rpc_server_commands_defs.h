@@ -2189,7 +2189,10 @@ namespace cryptonote
   {
     struct request
     {
+      uint64_t grace_blocks;
+
       BEGIN_KV_SERIALIZE_MAP()
+        KV_SERIALIZE(grace_blocks)
       END_KV_SERIALIZE_MAP()
     };
 
