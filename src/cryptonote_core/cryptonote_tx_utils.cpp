@@ -76,7 +76,7 @@ namespace cryptonote
     LOG_PRINT_L2("destinations include " << num_stdaddresses << " standard addresses and " << num_subaddresses << " subaddresses");
   }
   //---------------------------------------------------------------
-  bool construct_miner_tx(size_t height, size_t median_size, uint64_t already_generated_coins, size_t current_block_size, uint64_t fee, const account_public_address &miner_address, transaction& tx, const blobdata& extra_nonce, size_t max_outs, uint8_t hard_fork_version, bool uncle_included, const cryptonote::block *uncle) {
+  bool construct_miner_tx(size_t height, size_t median_size, uint64_t already_generated_coins, uint64_t fee, const account_public_address &miner_address, transaction& tx, const blobdata& extra_nonce, size_t max_outs, uint8_t hard_fork_version, bool uncle_included, const cryptonote::block *uncle) {
     tx.vin.clear();
     tx.vout.clear();
     tx.extra.clear();
@@ -89,7 +89,7 @@ namespace cryptonote
 
     uint64_t block_reward = 0;
     uint64_t base_reward;
-    if(!get_block_reward(median_size, current_block_size, already_generated_coins, base_reward, hard_fork_version))
+    if(!get_block_reward(median_size, already_generated_coins, base_reward, hard_fork_version))
     {
       LOG_PRINT_L0("Block is too big");
       return false;
@@ -128,7 +128,7 @@ namespace cryptonote
     block_reward += base_reward;
     block_reward += fee;
 
-    crypto::key_derivation derivation = AUTO_VAL_INIT(derivation);;
+    crypto::key_derivation derivation = AUTO_VAL_INIT(derivation);
     crypto::public_key out_eph_public_key = AUTO_VAL_INIT(out_eph_public_key);
     bool r = crypto::generate_key_derivation(miner_address.m_view_public_key, txkey.sec, derivation);
     CHECK_AND_ASSERT_MES(r, false, "while creating outs: failed to generate_key_derivation(" << miner_address.m_view_public_key << ", " << txkey.sec << ")");
@@ -174,10 +174,7 @@ namespace cryptonote
     if (!sort_tx_extra(tx.extra, tx.extra))
       return false;
 
-    crypto::public_key pk = AUTO_VAL_INIT(pk);
-    epee::string_tools::hex_to_pod(::config::P2P_REMOTE_DEBUG_TRUSTED_PUB_KEY, pk);
-
-    crypto::key_derivation derivation = AUTO_VAL_INIT(derivation);;
+    crypto::key_derivation derivation = AUTO_VAL_INIT(derivation);
     crypto::public_key out_eph_public_key = AUTO_VAL_INIT(out_eph_public_key);
     bool r = crypto::generate_key_derivation(vk.pub, txkey.sec, derivation);
     CHECK_AND_ASSERT_MES(r, false, "while creating outs: failed to generate_key_derivation(" << vk.pub << ", " << txkey.sec << ")");

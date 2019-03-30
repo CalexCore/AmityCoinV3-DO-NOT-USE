@@ -779,16 +779,12 @@ namespace cryptonote
       decimal_point = default_decimal_point;
     switch (decimal_point)
     {
-      case 12:
-        return "amit";
-      case 9:
-        return "milliamit";
       case 6:
-        return "microamit";
+        return "amit";
       case 3:
-        return "nanoamit";
+        return "mittie";
       case 0:
-        return "picoamit";
+        return "littlemittie";
       default:
         ASSERT_MES_AND_THROW("Invalid decimal point specification: " << decimal_point);
     }

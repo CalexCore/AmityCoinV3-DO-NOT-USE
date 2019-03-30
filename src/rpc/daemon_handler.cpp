@@ -780,7 +780,7 @@ namespace rpc
 
   void DaemonHandler::handle(const GetPerKBFeeEstimate::Request& req, GetPerKBFeeEstimate::Response& res)
   {
-    res.estimated_fee_per_kb = m_core.get_blockchain_storage().get_dynamic_per_kb_fee_estimate(req.num_grace_blocks);
+    res.estimated_fee_per_kb = m_core.get_blockchain_storage().get_dynamic_per_kb_fee_estimate();
     res.status = Message::STATUS_OK;
   }
 

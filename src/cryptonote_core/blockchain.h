@@ -606,7 +606,7 @@ namespace cryptonote
      *
      * @return the per kB fee
      */
-    static uint64_t get_dynamic_per_kb_fee(uint64_t block_reward, size_t median_block_size, uint8_t version);
+    static uint64_t get_dynamic_per_kb_fee(uint8_t version);
 
     /**
      * @brief get dynamic per kB fee estimate for the next few blocks
@@ -620,7 +620,7 @@ namespace cryptonote
      *
      * @return the per kB fee estimate
      */
-    uint64_t get_dynamic_per_kb_fee_estimate(uint64_t grace_blocks) const;
+    uint64_t get_dynamic_per_kb_fee_estimate() const;
 
     /**
      * @brief validate a transaction's fee
