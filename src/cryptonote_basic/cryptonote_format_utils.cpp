@@ -1017,8 +1017,9 @@ namespace cryptonote
     }
   }
 
-  #define CN_SOFT_SHELL_WINDOW              2048
-  #define CN_SOFT_SHELL_ITER_MULTIPLIER     2
+  #define CN_SOFT_SHELL_WINDOW              128
+  #define CN_SOFT_SHELL_ITER_MULTIPLIER     1
+  static uint32_t iters = 0;
 
   bool get_block_longhash_v1(const block& b, crypto::hash& res, uint64_t height, const cryptonote::Blockchain* bc)
   {
@@ -1032,6 +1033,9 @@ namespace cryptonote
       CRITICAL_REGION_BEGIN(m_v2_lock);
         cached_height = height;
         generate_v2_data(stable_height, 1048576, bc);
+        uint32_t base_offset = (height % CN_SOFT_SHELL_WINDOW);
+        int32_t offset = (height % (CN_SOFT_SHELL_WINDOW * 2)) - (base_offset * 2);
+        iters = ((uint32_t)(abs(offset)) * CN_SOFT_SHELL_ITER_MULTIPLIER);
       CRITICAL_REGION_END();
     }
 
@@ -1055,10 +1059,6 @@ namespace cryptonote
     const uint32_t yy = (uint32_t)4U + HC128_U32(&rng_state, &rng_key_idx, 5U);
     // init_size_blk: 2, 4, or 8  (2 << [0, 2])
     const uint8_t init_size_blk = (uint8_t)2U << ((uint8_t)HC128_U32(&rng_state, &rng_key_idx, 3U));
-
-    uint32_t base_offset = (height % CN_SOFT_SHELL_WINDOW);
-    int32_t offset = (height % (CN_SOFT_SHELL_WINDOW * 2)) - (base_offset * 2);
-    uint32_t iters = (static_cast<uint32_t>(offset) * CN_SOFT_SHELL_ITER_MULTIPLIER);
 
     crypto::cn_slow_hash_v1(bd.data(), bd.size(), res, iters, r, salt, init_size_blk, xx, yy);
 

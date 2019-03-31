@@ -56,9 +56,9 @@
 #define BLOCKCHAIN_TIMESTAMP_CHECK_WINDOW               12
 #define CRYPTONOTE_BLOCK_FUTURE_TIME_LIMIT              60*5
 
-#define BLOCK_REWARD                                    ((uint64_t)100000000)       //100 amit
+#define BLOCK_REWARD                                    ((uint64_t)186000000)       //186 amit
 #define GENESIS_BLOCK_REWARD                            ((uint64_t)100000000000)    //100k amit
-#define PER_KB_BASE_FEE                                 ((uint64_t)500000)          //0.5 amit                           
+#define PER_KB_BASE_FEE                                 ((uint64_t)5000)            //0.005 amit                           
 
 #define CRYPTONOTE_REWARD_BLOCKS_WINDOW                 100
 #define CRYPTONOTE_BLOCK_GRANTED_FULL_REWARD_ZONE       300000
@@ -68,7 +68,7 @@
 #define DEFAULT_MIXIN                                   4
 #define DEFAULT_RINGSIZE                                DEFAULT_MIXIN + 1
 
-#define DIFFICULTY_TARGET                               60  // seconds
+#define DIFFICULTY_TARGET                               120  // seconds
 
 #define UNCLE_DIFFICULTY_TARGET                         DIFFICULTY_TARGET/4
 #define UNCLE_REWARD_RATIO                              2
