@@ -146,10 +146,10 @@ namespace config
     uint64_t const CRYPTONOTE_PUBLIC_ADDRESS_BASE58_PREFIX = 0x1bf3c9; //amit
     uint64_t const CRYPTONOTE_PUBLIC_INTEGRATED_ADDRESS_BASE58_PREFIX = 0x5cd49; //aint
     uint64_t const CRYPTONOTE_PUBLIC_SUBADDRESS_BASE58_PREFIX = 0x29054a; //asub
-    uint16_t const P2P_DEFAULT_PORT = 17111;
-    uint16_t const RPC_DEFAULT_PORT = 17112;
-    uint16_t const ZMQ_RPC_DEFAULT_PORT = 17113;
-    boost::uuids::uuid const NETWORK_ID = {{0x42, 0x31, 0xB1, 0x75, 0x61, 0x04, 0x41, 0x21, 0x17, 0x31, 0x01, 0x82, 0x16, 0xA1, 0xB1, 0x52}};
+    uint16_t const P2P_DEFAULT_PORT = 21018;
+    uint16_t const RPC_DEFAULT_PORT = 31018;
+    uint16_t const ZMQ_RPC_DEFAULT_PORT = 37113;
+    boost::uuids::uuid const NETWORK_ID = {{0x42, 0x38, 0xB1, 0x75, 0x61, 0x04, 0x41, 0x21, 0x17, 0x31, 0x01, 0x82, 0x16, 0xA1, 0xB1, 0x52}};
     std::string const GENESIS_TX = 
     "011401ff00018080bce2c886ba8a0202b66e8ac4031045b52fa0a5087b78eee30e8877470e820a06282846c6323b2354210121cef3fb1faab36e00e5cf37fe1cb785b09170b25f6fbee37b2da935e82e88ed00";
 
@@ -158,7 +158,10 @@ namespace config
     //hooftly: Set seed nodes and an aliases. The seed_node_alias is a ssl enabled url pointing to 
     //the blacklist and analytics servers. in nerva these operate on the seed nodes, hence the name
     //if you do not have these set up or don't want them, then leave empty
-    std::set<std::string> const seed_nodes = { };
+    std::set<std::string> const seed_nodes = { 
+        "18.217.91.5:21018",
+        "18.220.89.44:31018"
+    };
 
     std::set<std::string> const seed_node_aliases = { };
 
