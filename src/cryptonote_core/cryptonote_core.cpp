@@ -1518,7 +1518,7 @@ namespace cryptonote
       else
         main_message = "The daemon will start synchronizing with the network. This may take a long time to complete.";
 
-      //hooftly: change ascii art if you want
+      //Forker: change ascii art if you want
       MGINFO_GREEN(ENDL 
         << R"(    ___              _ __                   _      )" << ENDL
         << R"(   /   |  ____ ___  (_) /___  ___________  (_)___  )" << ENDL
