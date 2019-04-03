@@ -142,7 +142,7 @@ namespace config
     uint64_t const DEFAULT_DUST_THRESHOLD = 0; // deprecated
     std::string const P2P_REMOTE_DEBUG_TRUSTED_PUB_KEY = "0000000000000000000000000000000000000000000000000000000000000000";
 
-    //hooftly: change prefix, net id, port
+    //Forker: change prefix, net id, port
     uint64_t const CRYPTONOTE_PUBLIC_ADDRESS_BASE58_PREFIX = 0x1bf3c9; //amit
     uint64_t const CRYPTONOTE_PUBLIC_INTEGRATED_ADDRESS_BASE58_PREFIX = 0x5cd49; //aint
     uint64_t const CRYPTONOTE_PUBLIC_SUBADDRESS_BASE58_PREFIX = 0x29054a; //asub
@@ -155,7 +155,7 @@ namespace config
 
     uint32_t const GENESIS_NONCE = 10000;
 
-    //hooftly: Set seed nodes and an aliases. The seed_node_alias is a ssl enabled url pointing to 
+    //Forker: Set seed nodes and an aliases. The seed_node_alias is a ssl enabled url pointing to 
     //the blacklist and analytics servers. in nerva these operate on the seed nodes, hence the name
     //if you do not have these set up or don't want them, then leave empty
     std::set<std::string> const seed_nodes = { 
