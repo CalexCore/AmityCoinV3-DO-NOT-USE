@@ -159,8 +159,8 @@ namespace config
     //the blacklist and analytics servers. in nerva these operate on the seed nodes, hence the name
     //if you do not have these set up or don't want them, then leave empty
     std::set<std::string> const seed_nodes = { 
-        "18.217.91.5:21018",
-        "18.220.89.44:31018"
+        "13.59.141.49:21018",
+        "18.191.186.200:31018"
     };
 
     std::set<std::string> const seed_node_aliases = { };
