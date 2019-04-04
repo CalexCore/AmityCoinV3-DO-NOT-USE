@@ -56,9 +56,9 @@
 #define BLOCKCHAIN_TIMESTAMP_CHECK_WINDOW               12
 #define CRYPTONOTE_BLOCK_FUTURE_TIME_LIMIT              60*5
 
-#define BLOCK_REWARD                                    ((uint64_t)186000000)       //186 amit
-#define GENESIS_BLOCK_REWARD                            ((uint64_t)100000000000)    //100k amit
-#define PER_KB_BASE_FEE                                 ((uint64_t)5000)            //0.005 amit                           
+#define BLOCK_REWARD                                    ((uint64_t)100000000)         //100 amit
+#define GENESIS_BLOCK_REWARD                            ((uint64_t)19000000000000)    //19M amit
+#define PER_KB_BASE_FEE                                 ((uint64_t)5000)              //0.005 amit                           
 
 #define CRYPTONOTE_REWARD_BLOCKS_WINDOW                 100
 #define CRYPTONOTE_BLOCK_GRANTED_FULL_REWARD_ZONE       300000
@@ -159,8 +159,8 @@ namespace config
     //the blacklist and analytics servers. in nerva these operate on the seed nodes, hence the name
     //if you do not have these set up or don't want them, then leave empty
     std::set<std::string> const seed_nodes = { 
-        "13.59.141.49:21018",
-        "18.191.186.200:31018"
+        "3.17.175.98:21018",
+        "18.191.186.200:21018"
     };
 
     std::set<std::string> const seed_node_aliases = { };

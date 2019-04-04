@@ -86,15 +86,18 @@ namespace cryptonote {
   bool get_block_reward(size_t median_size, uint64_t already_generated_coins, uint64_t &reward, uint8_t version)
   {
     //todo: block reward changes go here
+    // if (version >= 2)
+    //    reward = BLOCK_REWARD_V2;
+    // else
+    //    reward = BLOCK_REWARD;
+
     if (median_size > 0 && already_generated_coins < GENESIS_BLOCK_REWARD) {
       reward = GENESIS_BLOCK_REWARD;
       return true;
     }
 
-    switch (version) {
-      default:
-        reward = BLOCK_REWARD; 
-    }
+    if (version >= 0)
+        reward = BLOCK_REWARD;
 
     return true;
   }
