@@ -56,7 +56,7 @@
 #define BLOCKCHAIN_TIMESTAMP_CHECK_WINDOW               12
 #define CRYPTONOTE_BLOCK_FUTURE_TIME_LIMIT              60*5
 
-#define BLOCK_REWARD                                    ((uint64_t)100000000)         //100 amit
+#define BLOCK_REWARD                                    ((uint64_t)186000000)         //186 amit
 #define GENESIS_BLOCK_REWARD                            ((uint64_t)19000000000000)    //19M amit
 #define PER_KB_BASE_FEE                                 ((uint64_t)5000)              //0.005 amit                           
 
@@ -172,12 +172,15 @@ namespace config
 
     namespace testnet
     {
-        uint16_t const P2P_DEFAULT_PORT = 18111;
-        uint16_t const RPC_DEFAULT_PORT = 18112;
+        uint16_t const P2P_DEFAULT_PORT = 21111;
+        uint16_t const RPC_DEFAULT_PORT = 31112;
         uint16_t const ZMQ_RPC_DEFAULT_PORT = 18113;
         boost::uuids::uuid const NETWORK_ID = {{0x93, 0x42, 0xF0, 0x55, 0x42, 0x18, 0x60, 0x33, 0x16, 0x81, 0x01, 0x92, 0xAA, 0xAC, 0xFF, 0x43}};
 
-        std::set<std::string> const seed_nodes = { };
+        std::set<std::string> const seed_nodes = {
+            "18.216.156.140:21111",
+            "18.220.89.44:21111"
+         };
 
         std::set<std::string> const seed_node_aliases = { };
 
