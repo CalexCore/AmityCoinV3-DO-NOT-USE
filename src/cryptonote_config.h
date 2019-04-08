@@ -43,11 +43,11 @@
 #define CRYPTONOTE_MAX_BLOCK_SIZE                       500000000  // block header blob limit, never used!
 #define CRYPTONOTE_MAX_TX_SIZE                          1000000000
 #define CRYPTONOTE_PUBLIC_ADDRESS_TEXTBLOB_VER          0
-#define CRYPTONOTE_MINED_MONEY_UNLOCK_WINDOW            20
+#define CRYPTONOTE_MINED_MONEY_UNLOCK_WINDOW            360
 #define CURRENT_TRANSACTION_VERSION                     1
 #define CURRENT_BLOCK_MAJOR_VERSION                     1
 #define CURRENT_BLOCK_MINOR_VERSION                     1
-#define CRYPTONOTE_DEFAULT_TX_SPENDABLE_AGE             20
+#define CRYPTONOTE_DEFAULT_TX_SPENDABLE_AGE             1
 
 #define BULLETPROOF_MAX_OUTPUTS                         16
 #define BULLETPROOF_SIMPLE_FORK_HEIGHT                  1
@@ -57,7 +57,7 @@
 #define CRYPTONOTE_BLOCK_FUTURE_TIME_LIMIT              60*5
 
 #define BLOCK_REWARD                                    ((uint64_t)186000000)         //186 amit
-#define GENESIS_BLOCK_REWARD                            ((uint64_t)19000000000000)    //19M amit
+#define GENESIS_BLOCK_REWARD                            ((uint64_t)22000000000000)    //19M amit
 #define PER_KB_BASE_FEE                                 ((uint64_t)5000)              //0.005 amit                           
 
 #define CRYPTONOTE_REWARD_BLOCKS_WINDOW                 100
@@ -146,8 +146,8 @@ namespace config
     uint64_t const CRYPTONOTE_PUBLIC_ADDRESS_BASE58_PREFIX = 0x1bf3c9; //amit
     uint64_t const CRYPTONOTE_PUBLIC_INTEGRATED_ADDRESS_BASE58_PREFIX = 0x5cd49; //aint
     uint64_t const CRYPTONOTE_PUBLIC_SUBADDRESS_BASE58_PREFIX = 0x29054a; //asub
-    uint16_t const P2P_DEFAULT_PORT = 21018;
-    uint16_t const RPC_DEFAULT_PORT = 31018;
+    uint16_t const P2P_DEFAULT_PORT = 41018;
+    uint16_t const RPC_DEFAULT_PORT = 51018;
     uint16_t const ZMQ_RPC_DEFAULT_PORT = 37113;
     boost::uuids::uuid const NETWORK_ID = {{0x42, 0x38, 0xB1, 0x75, 0x61, 0x04, 0x41, 0x21, 0x17, 0x31, 0x01, 0x82, 0x16, 0xA1, 0xB1, 0x52}};
     std::string const GENESIS_TX = 
@@ -159,8 +159,8 @@ namespace config
     //the blacklist and analytics servers. in nerva these operate on the seed nodes, hence the name
     //if you do not have these set up or don't want them, then leave empty
     std::set<std::string> const seed_nodes = { 
-        "3.17.175.98:21018",
-        "18.191.186.200:21018"
+        "3.17.175.98:41018",
+        "18.191.186.200:41018"
     };
 
     std::set<std::string> const seed_node_aliases = { };
