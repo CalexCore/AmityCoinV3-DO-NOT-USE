@@ -151,7 +151,7 @@ namespace config
     uint16_t const ZMQ_RPC_DEFAULT_PORT = 37113;
     boost::uuids::uuid const NETWORK_ID = {{0x42, 0x38, 0xB1, 0x75, 0x61, 0x04, 0x41, 0x21, 0x17, 0x31, 0x01, 0x82, 0x16, 0xA1, 0xB1, 0x52}};
     std::string const GENESIS_TX = 
-    "011401ff00018080bce2c886ba8a0202b66e8ac4031045b52fa0a5087b78eee30e8877470e820a06282846c6323b2354210121cef3fb1faab36e00e5cf37fe1cb785b09170b25f6fbee37b2da935e82e88ed00";
+    "01e80201ff000180c0bdb1a48005022ba93a5a25f0acc40dee21a8bcdae31726d4847d17ce1bfcf8f7a6f7bca4eeb321010c834dea559f980df9bcbf9d4fab3d3a46841fd8f70fcc23e5fa995c66b8e7dc00";
 
     uint32_t const GENESIS_NONCE = 10000;
 
