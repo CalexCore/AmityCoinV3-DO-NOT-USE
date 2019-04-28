@@ -1,4 +1,4 @@
-// Copyright (c) 2016-2018, The Monero Project
+// Copyright (c) 2016-2019, The Monero Project
 // 
 // All rights reserved.
 // 
@@ -562,13 +562,13 @@ void toJsonValue(rapidjson::Document& doc, const cryptonote::connection_info& in
 {
   val.SetObject();
 
-  auto& al = doc.GetAllocator();
   INSERT_INTO_JSON_OBJECT(val, doc, incoming, info.incoming);
   INSERT_INTO_JSON_OBJECT(val, doc, localhost, info.localhost);
   INSERT_INTO_JSON_OBJECT(val, doc, local_ip, info.local_ip);
 
   INSERT_INTO_JSON_OBJECT(val, doc, ip, info.ip);
   INSERT_INTO_JSON_OBJECT(val, doc, port, info.port);
+  INSERT_INTO_JSON_OBJECT(val, doc, rpc_port, info.rpc_port);
 
   INSERT_INTO_JSON_OBJECT(val, doc, peer_id, info.peer_id);
 
@@ -603,6 +603,7 @@ void fromJsonValue(const rapidjson::Value& val, cryptonote::connection_info& inf
 
   GET_FROM_JSON_OBJECT(val, info.ip, ip);
   GET_FROM_JSON_OBJECT(val, info.port, port);
+  GET_FROM_JSON_OBJECT(val, info.rpc_port, rpc_port);
 
   GET_FROM_JSON_OBJECT(val, info.peer_id, peer_id);
 
@@ -732,6 +733,7 @@ void toJsonValue(rapidjson::Document& doc, const cryptonote::rpc::peer& peer, ra
   INSERT_INTO_JSON_OBJECT(val, doc, id, peer.id);
   INSERT_INTO_JSON_OBJECT(val, doc, ip, peer.ip);
   INSERT_INTO_JSON_OBJECT(val, doc, port, peer.port);
+  INSERT_INTO_JSON_OBJECT(val, doc, rpc_port, peer.rpc_port);
   INSERT_INTO_JSON_OBJECT(val, doc, last_seen, peer.last_seen);
 }
 
@@ -746,6 +748,7 @@ void fromJsonValue(const rapidjson::Value& val, cryptonote::rpc::peer& peer)
   GET_FROM_JSON_OBJECT(val, peer.id, id);
   GET_FROM_JSON_OBJECT(val, peer.ip, ip);
   GET_FROM_JSON_OBJECT(val, peer.port, port);
+  GET_FROM_JSON_OBJECT(val, peer.rpc_port, rpc_port);
   GET_FROM_JSON_OBJECT(val, peer.last_seen, last_seen);
 }
 
@@ -1192,7 +1195,6 @@ void toJsonValue(rapidjson::Document& doc, const cryptonote::rpc::DaemonInfo& in
   INSERT_INTO_JSON_OBJECT(val, doc, top_block_hash, info.top_block_hash);
   INSERT_INTO_JSON_OBJECT(val, doc, cumulative_difficulty, info.cumulative_difficulty);
   INSERT_INTO_JSON_OBJECT(val, doc, block_size_limit, info.block_size_limit);
-  INSERT_INTO_JSON_OBJECT(val, doc, start_time, info.start_time);
 }
 
 void fromJsonValue(const rapidjson::Value& val, cryptonote::rpc::DaemonInfo& info)
@@ -1220,7 +1222,6 @@ void fromJsonValue(const rapidjson::Value& val, cryptonote::rpc::DaemonInfo& inf
   GET_FROM_JSON_OBJECT(val, info.top_block_hash, top_block_hash);
   GET_FROM_JSON_OBJECT(val, info.cumulative_difficulty, cumulative_difficulty);
   GET_FROM_JSON_OBJECT(val, info.block_size_limit, block_size_limit);
-  GET_FROM_JSON_OBJECT(val, info.start_time, start_time);
 }
 
 }  // namespace json

@@ -540,10 +540,13 @@ bool load_txt_records_from_dns(std::vector<std::string> &good_records, const std
 
   if (num_valid_records == 0)
   {
-    LOG_PRINT_L0("Unable to find valid DNS record");
+    LOG_PRINT_L1("Unable to find valid DNS record");
     return false;
   }
 
+  //nerva currently only has one dns update url. So if we have made it this far
+  //we have a dnssec verified update record, so accept it. it is after all only for notification purposes
+  //the code will automatically require 2 if it comes a time when we can add a second domain
   if (dns_urls.size() == 1)
   {
     good_records = records[0];
@@ -569,7 +572,7 @@ bool load_txt_records_from_dns(std::vector<std::string> &good_records, const std
 
     if (good_records_index < 0)
     {
-      LOG_PRINT_L0("Unable to find two matching DNS records");
+      LOG_PRINT_L1("Unable to find two matching DNS records");
       return false;
     }
 

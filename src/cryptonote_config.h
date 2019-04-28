@@ -70,11 +70,6 @@
 
 #define DIFFICULTY_TARGET                               120  // seconds
 
-#define UNCLE_DIFFICULTY_TARGET                         DIFFICULTY_TARGET/4
-#define UNCLE_REWARD_RATIO                              2
-#define NEPHEW_REWARD_RATIO                             20
-#define UNCLE_MINING_FORK_HEIGHT                        100
-
 #define DIFFICULTY_BLOCKS_ESTIMATE_TIMESPAN             DIFFICULTY_TARGET //just alias; used by tests
 #define DIFFICULTY_WINDOW                               17
 #define DIFFICULTY_CUT                                  6
@@ -105,19 +100,20 @@
 #define P2P_DEFAULT_WHITELIST_CONNECTIONS_PERCENT       70
 #define P2P_DEFAULT_ANCHOR_CONNECTIONS_COUNT            2
 
-#define HF_SUPPORTED_MIN_VERSION                        version_string_to_integer("0.0.0.1")
-#define SUPPORTED_MIN_VERSION                           version_string_to_integer("0.0.0.1")
-
 #define P2P_FAILED_ADDR_FORGET_SECONDS                  (60*60)     //1 hour
 #define P2P_IP_BLOCKTIME_MAINNET                        (60*60*24)  //24 hour
 #define P2P_IP_BLOCKTIME_TESTNET                        (60*5)      //5 minutes
 #define P2P_IP_FAILS_BEFORE_BLOCK                       10
 #define P2P_IDLE_CONNECTION_KILL_INTERVAL               (5*60) //5 minutes
+#define P2P_DEFAULT_SOCKS_CONNECT_TIMEOUT               45         // seconds
+#define P2P_DEFAULT_SYNC_SEARCH_CONNECTIONS_COUNT       2
+#define P2P_DEFAULT_LIMIT_RATE_UP                       2048       // kB/s
+#define P2P_DEFAULT_LIMIT_RATE_DOWN                     8192       // kB/s
 
 #define P2P_SUPPORT_FLAG_FLUFFY_BLOCKS                  0x01
 #define P2P_SUPPORT_FLAGS                               P2P_SUPPORT_FLAG_FLUFFY_BLOCKS
 
-#define ALLOW_DEBUG_COMMANDS
+//#define ALLOW_DEBUG_COMMANDS
 
 #define CRYPTONOTE_NAME                                 "amity"
 #define CRYPTONOTE_POOLDATA_FILENAME                    "poolstate.bin"
@@ -155,15 +151,13 @@ namespace config
 
     uint32_t const GENESIS_NONCE = 10000;
 
-    //Forker: Set seed nodes and an aliases. The seed_node_alias is a ssl enabled url pointing to 
-    //the blacklist and analytics servers. in nerva these operate on the seed nodes, hence the name
-    //if you do not have these set up or don't want them, then leave empty
+    std::string const HF_MIN_VERSION = "0.0.0.1";
+    std::string const MIN_VERSION    = "0..0.0.1";
+    
     std::set<std::string> const seed_nodes = { 
         "3.17.175.98:41018",
         "18.191.186.200:41018"
     };
-
-    std::set<std::string> const seed_node_aliases = { };
 
     static const hard_fork hard_forks[] = {
         { 1,   1},
@@ -176,13 +170,14 @@ namespace config
         uint16_t const RPC_DEFAULT_PORT = 31112;
         uint16_t const ZMQ_RPC_DEFAULT_PORT = 18113;
         boost::uuids::uuid const NETWORK_ID = {{0x93, 0x42, 0xF0, 0x55, 0x42, 0x18, 0x60, 0x33, 0x16, 0x81, 0x01, 0x92, 0xAA, 0xAC, 0xFF, 0x43}};
+		
+        std::string const HF_MIN_VERSION = "0.0.0.1";
+        std::string const MIN_VERSION    = "0.0.0.1";
 
         std::set<std::string> const seed_nodes = {
             "18.216.156.140:21111",
             "18.220.89.44:21111"
          };
-
-        std::set<std::string> const seed_node_aliases = { };
 
         static const hard_fork hard_forks[] = {
             { 1,   1},
@@ -198,6 +193,8 @@ namespace config
         boost::uuids::uuid const NETWORK_ID = { {
             0x24, 0x31, 0xF1, 0x72 , 0x54, 0x36 , 0x36, 0xFF, 0xBB, 0x51, 0x00, 0x3C, 0x3D, 0xAA, 0x16, 0x2F
         } }; // Bender's daydream
+
+		std::set<std::string> const seed_nodes = { };
 
         static const hard_fork hard_forks[] = {
             { 1,   1},
@@ -249,6 +246,8 @@ namespace cryptonote
         boost::uuids::uuid const NETWORK_ID;
         std::string const GENESIS_TX;
         uint32_t const GENESIS_NONCE;
+        std::string const HF_MIN_VERSION;
+        std::string const MIN_VERSION;
     };
 
     inline const config_t &get_config(network_type nettype)
@@ -262,7 +261,9 @@ namespace cryptonote
             ::config::ZMQ_RPC_DEFAULT_PORT,
             ::config::NETWORK_ID,
             ::config::GENESIS_TX,
-            ::config::GENESIS_NONCE
+            ::config::GENESIS_NONCE,
+            ::config::HF_MIN_VERSION,
+            ::config::MIN_VERSION
             };
         static const config_t testnet = {
             ::config::CRYPTONOTE_PUBLIC_ADDRESS_BASE58_PREFIX,
@@ -273,7 +274,9 @@ namespace cryptonote
             ::config::testnet::ZMQ_RPC_DEFAULT_PORT,
             ::config::testnet::NETWORK_ID,
             ::config::GENESIS_TX,
-            ::config::GENESIS_NONCE
+            ::config::GENESIS_NONCE,
+            ::config::testnet::HF_MIN_VERSION,
+            ::config::testnet::MIN_VERSION
             };
         static const config_t stagenet = {
             ::config::CRYPTONOTE_PUBLIC_ADDRESS_BASE58_PREFIX,
@@ -284,7 +287,8 @@ namespace cryptonote
             ::config::stagenet::ZMQ_RPC_DEFAULT_PORT,
             ::config::stagenet::NETWORK_ID,
             ::config::GENESIS_TX,
-            ::config::GENESIS_NONCE
+            ::config::GENESIS_NONCE,
+            "", ""
             };
 
         switch (nettype)

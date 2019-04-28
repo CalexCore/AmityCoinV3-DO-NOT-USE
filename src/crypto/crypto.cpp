@@ -28,6 +28,13 @@
 // 
 // Parts of this file are originally copyright (c) 2012-2013 The Cryptonote developers
 
+// cpuid detection
+#if defined(_MSC_VER) || defined(__MINGW32__)
+#  include <intrin.h>
+#elif defined(__x86_64__) || defined(__i386__)
+#  include <cpuid.h>
+#endif
+
 #include <unistd.h>
 #include <cassert>
 #include <cstddef>
@@ -52,6 +59,27 @@ namespace {
 #else
     abort();
 #endif
+  }
+
+  static void _cpuid(unsigned int leaf, unsigned int *cpuinfo)
+  {
+    #if defined(_MSC_VER)
+    #  if (defined(_M_X64) || defined(_M_AMD64) || defined(_M_IX86)
+      __cpuid((int *)cpuinfo, leaf);
+    #  else
+      cpuinfo[0] = cpuinfo[1] = cpuinfo[2] = cpuinfo[3] = 0;
+    #  endif
+    #elif defined(__x86_64__) || defined(__i386__)
+    #  if defined(__MINGW32__)
+      // MinGW provides both intrin.h and cpuid.h, but they export a
+      // __cpuid macro which is consistent with MSC, not Linux.
+      __cpuid((int *)cpuinfo, leaf);
+    #  else
+      __cpuid_count(leaf, 0, cpuinfo[0], cpuinfo[1], cpuinfo[2], cpuinfo[3]);
+    #  endif
+    #else
+      cpuinfo[0] = cpuinfo[1] = cpuinfo[2] = cpuinfo[3] = 0;
+    #endif
   }
 }
 
@@ -82,6 +110,18 @@ namespace crypto {
 
   static inline unsigned char *operator &(ec_scalar &scalar) {
     return &reinterpret_cast<unsigned char &>(scalar);
+  }
+
+  bool has_aesni()
+  {
+    unsigned int cpuinfo[4];
+    _cpuid(0, cpuinfo);
+    if (cpuinfo[0] == 0)
+    {
+      return false;
+    }
+    _cpuid(1, cpuinfo);
+    return cpuinfo[2] & (1 << 25);
   }
 
   static inline const unsigned char *operator &(const ec_scalar &scalar) {

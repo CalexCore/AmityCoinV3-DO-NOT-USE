@@ -54,6 +54,5 @@ namespace boost
       ar & ei.block_cumulative_size;
       ar & ei.already_generated_coins;
     }
-
   }
 }

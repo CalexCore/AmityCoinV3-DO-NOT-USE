@@ -7,6 +7,17 @@
 #include "xnv_https.h"
 #include "cryptonote_config.h"
 #include "version.h"
+#include "misc_log_ex.h"
+
+namespace xnvhttp
+{
+    std::string get_host(std::string ip)
+    {
+        size_t found = ip.find_first_of(":");
+        std::string host = ip.substr(0, found);
+        return host;
+    }
+}
 
 namespace blacklist
 {
@@ -36,21 +47,19 @@ namespace blacklist
         return strings;
     }
 
-    std::string get_host(std::string ip)
-    {
-        size_t found = ip.find_first_of(":");
-        std::string host = ip.substr(0, found);
-        return host;
-    }
-
     void read_blacklist_from_url(const bool testnet)
     {
-        std::set<std::string> seed_node_aliases = testnet ? 
-            ::config::testnet::seed_node_aliases : ::config::seed_node_aliases;
+        //todo: not implemented
+        return;
 
-        for (const std::string &a : seed_node_aliases)
+        if (!testnet)
+            return;
+            
+        std::set<std::string> url_list = ::config::testnet::seed_nodes;
+        
+        for (const std::string &a : url_list)
         {
-            std::string url = "https://" + a + "/xnv_blacklist.txt";
+            std::string url = "http://" + xnvhttp::get_host(a) + "/xnv_blacklist.txt";
 
             CURL* curl = curl_easy_init(); 
             if(curl) 
@@ -75,12 +84,15 @@ namespace analytics
 {
     bool contact_server(const bool testnet)
     {
-        std::set<std::string> seed_node_aliases = testnet ? 
-            ::config::testnet::seed_node_aliases : ::config::seed_node_aliases;
+        //todo: not implemented
+        return false;
 
-        for (const std::string &a : seed_node_aliases)
+        std::set<std::string> url_list = testnet ? ::config::testnet::seed_nodes : ::config::seed_nodes;
+
+        for (const std::string &a : url_list)
         {
-            std::string url = "https://" + a + "/api/submitanalytics.php";
+            std::string url = "http://" + xnvhttp::get_host(a) + "/api/submitanalytics.php";
+            MGINFO("Sending analytics to " << url);
 
             std::string user_agent = "amity-cli/";
             user_agent.append(MONERO_VERSION);
@@ -94,10 +106,16 @@ namespace analytics
                 CURLcode res = curl_easy_perform(curl); 
                 curl_easy_cleanup(curl); 
                 if (res == CURLE_OK)
+                {
+                    MGINFO("Sending analytics successful");
                     return true;
+                }
+                else
+                    MGINFO("Curl returned error: " << curl_easy_strerror(res));
             } 
         }
-
+        
+        MGINFO("Sending analytics failed");
         return false;
     }
 }

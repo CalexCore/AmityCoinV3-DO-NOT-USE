@@ -1,5 +1,5 @@
 // Copyright (c) 2017-2018, The Masari Project
-// Copyright (c) 2014-2018, The Monero Project
+// Copyright (c) 2014-2019, The Monero Project
 //
 // All rights reserved.
 //
@@ -156,11 +156,6 @@ namespace cryptonote {
       return false;
 
     return true;
-  }
-  //-----------------------------------------------------------------------
-  bool is_uncle_block_included(const block& bl)
-  {
-    return bl.uncle != crypto::null_hash;
   }
   //-----------------------------------------------------------------------
   bool get_account_address_from_str(

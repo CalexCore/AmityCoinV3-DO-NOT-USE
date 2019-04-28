@@ -1,5 +1,5 @@
-// Copyright (c) 2017-2018, The Masari Project
-// Copyright (c) 2014-2018, The Monero Project
+// Copyright (c) 2014-2019, The Monero Project
+// Copyright (c) 2019, The NERVA Project
 //
 // All rights reserved.
 //
@@ -34,16 +34,13 @@
 #include "common/password.h"
 #include "common/util.h"
 #include "cryptonote_core/cryptonote_core.h"
-#include "cryptonote_core/cryptonote_tx_utils.h"
 #include "cryptonote_basic/miner.h"
-#include "cryptonote_basic/cryptonote_basic_impl.h"
-#include "cryptonote_basic/cryptonote_basic.h"
-#include "cryptonote_basic/cryptonote_format_utils.h"
 #include "daemon/command_server.h"
 #include "daemon/daemon.h"
 #include "daemon/executor.h"
 #include "daemonizer/daemonizer.h"
 #include "misc_log_ex.h"
+#include "net/parse.h"
 #include "p2p/net_node.h"
 #include "rpc/core_rpc_server.h"
 #include "rpc/rpc_args.h"
@@ -60,6 +57,57 @@
 
 namespace po = boost::program_options;
 namespace bf = boost::filesystem;
+
+uint16_t parse_public_rpc_port(const po::variables_map &vm)
+{
+  const auto &public_node_arg = daemon_args::arg_public_node;
+  const bool public_node = command_line::get_arg(vm, public_node_arg);
+  if (!public_node)
+  {
+    return 0;
+  }
+
+  std::string rpc_port_str;
+  const auto &restricted_rpc_port = cryptonote::core_rpc_server::arg_rpc_restricted_bind_port;
+  if (!command_line::is_arg_defaulted(vm, restricted_rpc_port))
+  {
+    rpc_port_str = command_line::get_arg(vm, restricted_rpc_port);;
+  }
+  else if (command_line::get_arg(vm, cryptonote::core_rpc_server::arg_restricted_rpc))
+  {
+    rpc_port_str = command_line::get_arg(vm, cryptonote::core_rpc_server::arg_rpc_bind_port);
+  }
+  else
+  {
+    throw std::runtime_error("restricted RPC mode is required");
+  }
+
+  uint16_t rpc_port;
+  if (!string_tools::get_xtype_from_string(rpc_port, rpc_port_str))
+  {
+    throw std::runtime_error("invalid RPC port " + rpc_port_str);
+  }
+
+  const auto rpc_bind_address = command_line::get_arg(vm, cryptonote::rpc_args::descriptors().rpc_bind_ip);
+  const auto address = net::get_network_address(rpc_bind_address, rpc_port);
+  if (!address) {
+    throw std::runtime_error("failed to parse RPC bind address");
+  }
+  if (address->get_zone() != epee::net_utils::zone::public_)
+  {
+    throw std::runtime_error(std::string(zone_to_string(address->get_zone()))
+      + " network zone is not supported, please check RPC server bind address");
+  }
+
+  if (address->is_loopback() || address->is_local())
+  {
+    MLOG_RED(el::Level::Warning, "--" << public_node_arg.name 
+      << " is enabled, but RPC server " << address->str() 
+      << " may be unreachable from outside, please check RPC server bind address");
+  }
+
+  return rpc_port;
+}
 
 int main(int argc, char const * argv[])
 {
@@ -94,6 +142,7 @@ int main(int argc, char const * argv[])
       command_line::add_arg(core_settings, daemon_args::arg_max_log_file_size);
       command_line::add_arg(core_settings, daemon_args::arg_max_log_files);
       command_line::add_arg(core_settings, daemon_args::arg_max_concurrency);
+      command_line::add_arg(core_settings, daemon_args::arg_public_node);
       command_line::add_arg(core_settings, daemon_args::arg_zmq_rpc_bind_ip);
       command_line::add_arg(core_settings, daemon_args::arg_zmq_rpc_bind_port);
 
@@ -193,13 +242,13 @@ int main(int argc, char const * argv[])
         bool r = do_serialize(ba, tx);
         if (r)
         {
-          MGINFO_YELLOW(ENDL << "New Genesis TX:" << ENDL << tx_hex);
+          MGUSER_YELLOW(ENDL << "New Genesis TX:" << ENDL << tx_hex);
           return 1;
         }
       }
       else
       {
-        MERROR("Could not create genesis TX");
+        MGUSER_RED("Could not create genesis TX");
         return 1;
       }
     }
@@ -309,23 +358,26 @@ int main(int argc, char const * argv[])
       }
     }
 
+    if (!tools::check_aesni())
+      return 1;
+
     if (noanalytics)
-      MGINFO_CYAN("Analytics disabled. Please consider helping us build the node map");
+      MGINFO("Analytics disabled. Please consider helping us build the node map");
     else
     {
       if (analytics::contact_server(testnet))
-        MGINFO_CYAN("Node map server pinged. Thanks for helping build the node map");
+        MGINFO("Node map server pinged. Thanks for helping build the node map");
       else
-        MGINFO_CYAN("Node map server error. Information not submitted");  
+        MGINFO("Node map server error. Information not submitted");  
     }        
 
     blacklist::read_blacklist_from_url(testnet);
     if (blacklist::get_ip_list().size() > 0)
-      MGINFO_CYAN("Blacklist loaded: " << blacklist::get_ip_list().size() << " items");
+      MGINFO("Blacklist loaded: " << blacklist::get_ip_list().size() << " items");
 
     MINFO("Moving from main() into the daemonize now.");
 
-    return daemonizer::daemonize(argc, argv, daemonize::t_executor{}, vm) ? 0 : 1;
+    return daemonizer::daemonize(argc, argv, daemonize::t_executor{parse_public_rpc_port(vm)}, vm) ? 0 : 1;
   }
   catch (std::exception const & ex)
   {
