@@ -1503,7 +1503,7 @@ namespace cryptonote
         main_message = "The daemon will start synchronizing with the network. This may take a long time to complete.";
 
       //Forker: change ascii art if you want
-      MGINFO_BLUE(ENDL 
+      MGUSER_BLUE(ENDL 
       << R"(════════════════════════════════════════════════════════════════════════════════)" << ENDL
       << R"(██╗   █████╗ ███╗   ███╗██╗████████╗██╗   ██╗ ██████╗ ██████╗ ██╗███╗   ██╗  ██╗)" << ENDL
       << R"(╚██╗ ██╔══██╗████╗ ████║██║╚══██╔══╝╚██╗ ██╔╝██╔════╝██╔═══██╗██║████╗  ██║ ██╔╝)" << ENDL
