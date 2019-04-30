@@ -71,12 +71,12 @@ public:
   bool run()
   {
     //initialize core here
-    MGINFO("Initializing core...");
+    MGUSER("Initializing core...");
     if (!m_core.init(m_vm_HACK, nullptr))
     {
       return false;
     }
-    MGINFO("Core initialized OK");
+    MGUSER("Core initialized OK");
     return true;
   }
 
@@ -87,7 +87,7 @@ public:
 
   ~t_core()
   {
-    MGINFO("Deinitializing core...");
+    MGUSER("Deinitializing core...");
     try {
       m_core.deinit();
       m_core.set_cryptonote_protocol(nullptr);
