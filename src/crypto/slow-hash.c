@@ -283,7 +283,6 @@ void cn_slow_hash_v1(const void *data, size_t length, char *hash, size_t iters, 
         aes_sw_variant();
 
     finalize_hash();
-    free(salt_hash);
 }
 
 void cn_slow_hash(const void *data, size_t length, char *hash, int prehashed)
