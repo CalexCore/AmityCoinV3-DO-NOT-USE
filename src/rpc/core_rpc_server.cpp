@@ -151,6 +151,15 @@ namespace cryptonote
       std::vector<std::vector<uint8_t>> ssl_allowed_fingerprints{ ssl_allowed_fingerprint_strings.size() };
       std::transform(ssl_allowed_fingerprint_strings.begin(), ssl_allowed_fingerprint_strings.end(), ssl_allowed_fingerprints.begin(), epee::from_hex::vector);
 
+      for (const auto &fpr: ssl_allowed_fingerprints)
+      {
+        if (fpr.size() != SSL_FINGERPRINT_SIZE)
+        {
+          MERROR("SHA-256 fingerprint should be " BOOST_PP_STRINGIZE(SSL_FINGERPRINT_SIZE) " bytes long.");
+          return false;
+        }
+      }
+
       if (!ssl_ca_path.empty() || !ssl_allowed_fingerprints.empty())
         ssl_options = epee::net_utils::ssl_options_t{std::move(ssl_allowed_fingerprints), std::move(ssl_ca_path)};
     }
@@ -2414,7 +2423,7 @@ namespace cryptonote
   const command_line::arg_descriptor<std::string> core_rpc_server::arg_rpc_ssl = {
       "rpc-ssl"
     , "Enable SSL on RPC connections: enabled|disabled|autodetect"
-    , "autodetect"
+    , "disabled"
     };
 
   const command_line::arg_descriptor<std::string> core_rpc_server::arg_rpc_ssl_private_key = {
