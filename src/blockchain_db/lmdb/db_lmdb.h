@@ -1,3 +1,4 @@
+// Copyright (c) 2019, The Nerva Project
 // Copyright (c) 2018, The Masari Project
 // Copyright (c) 2014-2018, The Monero Project
 // All rights reserved.
@@ -88,6 +89,7 @@ typedef struct mdb_block_info_v1
   uint64_t bi_size;
   difficulty_type bi_diff;
   crypto::hash bi_hash;
+  // TODO: bi_weight is unused but requires a migration to remove
   difficulty_type bi_weight;
 } mdb_block_info;
 
@@ -188,7 +190,7 @@ public:
   virtual void reset();
 
   virtual std::vector<std::string> get_filenames() const;
-  
+
   virtual bool remove_data_file(const std::string& folder) const;
 
   virtual std::string get_db_name() const;
@@ -212,20 +214,18 @@ public:
   virtual void build_cache(uint64_t height) const;
 
   virtual std::vector<uint64_t> get_block_cumulative_rct_outputs(const std::vector<uint64_t> &heights) const;
-  
+
   virtual uint64_t get_block_timestamp(const uint64_t& height) const;
 
   virtual uint64_t get_top_block_timestamp() const;
 
   virtual size_t get_block_size(const uint64_t& height) const;
 
-  virtual difficulty_type get_block_cumulative_weight(const uint64_t& height) const;
-
   virtual difficulty_type get_block_cumulative_difficulty(const uint64_t& height) const;
 
-  virtual void get_height_info(const uint64_t& height, difficulty_type& difficulty, difficulty_type& weight, difficulty_type& cumulative_difficulty, difficulty_type& cumulative_weight) const;
+  virtual void get_height_info(const uint64_t& height, difficulty_type& difficulty, difficulty_type& cumulative_difficulty) const;
 
-  virtual void get_height_info(const crypto::hash& h, difficulty_type& difficulty, difficulty_type& weight, difficulty_type& cumulative_difficulty, difficulty_type& cumulative_weight) const;
+  virtual void get_height_info(const crypto::hash& h, difficulty_type& difficulty, difficulty_type& cumulative_difficulty) const;
 
   virtual mdb_block_info get_block_info(const uint64_t& height) const;
 
@@ -293,7 +293,6 @@ public:
   virtual uint64_t add_block( const block& blk
                             , const size_t& block_size
                             , const difficulty_type& cumulative_difficulty
-                            , const difficulty_type& cumulative_weight
                             , const uint64_t& coins_generated
                             , const std::vector<transaction>& txs
                             );
@@ -333,10 +332,9 @@ private:
   void check_and_resize_for_batch(uint64_t batch_num_blocks, uint64_t batch_bytes);
   uint64_t get_estimated_batch_size(uint64_t batch_num_blocks, uint64_t batch_bytes) const;
 
-  virtual void add_block( const block& blk
+  virtual void add_block(const block& blk
                 , const size_t& block_size
                 , const difficulty_type& cumulative_difficulty
-                , const difficulty_type& cumulative_weight
                 , const uint64_t& coins_generated
                 , const crypto::hash& block_hash
                 );
