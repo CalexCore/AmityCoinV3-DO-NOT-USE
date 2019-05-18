@@ -126,6 +126,8 @@
 #define HASH_OF_HASHES_STEP                             256
 #define DEFAULT_TXPOOL_MAX_SIZE                         648000000ull // 3 days at 300000, in bytes
 
+#define DONATION_ADDR "amitGvbEpdH6vcmWR3qXd9XXyud78DQfM84D2P9NMpJEV9iZFTTrmP5f6kUwWVmfNBXyMs4AufNUoUrGsqwfUn1L695cS6EkwC"
+
 struct hard_fork
 {
     uint8_t version;
