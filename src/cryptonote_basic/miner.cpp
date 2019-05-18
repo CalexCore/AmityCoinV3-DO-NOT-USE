@@ -89,12 +89,13 @@ namespace cryptonote
   {
     const command_line::arg_descriptor<std::string> arg_extra_messages =  {"extra-messages-file", "Specify file for extra messages to include into coinbase transactions", "", true};
     const command_line::arg_descriptor<std::string> arg_start_mining =    {"start-mining", "Specify wallet address to mining for", "", true};
-    const command_line::arg_descriptor<uint32_t>      arg_mining_threads =  {"mining-threads", "Specify mining threads count", 0, true};
+    const command_line::arg_descriptor<uint32_t>    arg_donate_mining =    {"donate-level", "Specify a percentage of blocks to mine to the development wallet", miner::MINING_DEFAULT_DONATION_LEVEL, true};
+    const command_line::arg_descriptor<uint32_t>    arg_mining_threads =  {"mining-threads", "Specify mining threads count", 0, true};
     const command_line::arg_descriptor<bool>        arg_bg_mining_enable =  {"bg-mining-enable", "enable/disable background mining", true, true};
     const command_line::arg_descriptor<bool>        arg_bg_mining_ignore_battery =  {"bg-mining-ignore-battery", "if true, assumes plugged in when unable to query system power status", false, true};    
     const command_line::arg_descriptor<uint64_t>    arg_bg_mining_min_idle_interval_seconds =  {"bg-mining-min-idle-interval", "Specify min lookback interval in seconds for determining idle state", miner::BACKGROUND_MINING_DEFAULT_MIN_IDLE_INTERVAL_IN_SECONDS, true};
-    const command_line::arg_descriptor<uint16_t>     arg_bg_mining_idle_threshold_percentage =  {"bg-mining-idle-threshold", "Specify minimum avg idle percentage over lookback interval", miner::BACKGROUND_MINING_DEFAULT_IDLE_THRESHOLD_PERCENTAGE, true};
-    const command_line::arg_descriptor<uint16_t>     arg_bg_mining_miner_target_percentage =  {"bg-mining-miner-target", "Specify maximum percentage cpu use by miner(s)", miner::BACKGROUND_MINING_DEFAULT_MINING_TARGET_PERCENTAGE, true};
+    const command_line::arg_descriptor<uint16_t>    arg_bg_mining_idle_threshold_percentage =  {"bg-mining-idle-threshold", "Specify minimum avg idle percentage over lookback interval", miner::BACKGROUND_MINING_DEFAULT_IDLE_THRESHOLD_PERCENTAGE, true};
+    const command_line::arg_descriptor<uint16_t>    arg_bg_mining_miner_target_percentage =  {"bg-mining-miner-target", "Specify maximum percentage cpu use by miner(s)", miner::BACKGROUND_MINING_DEFAULT_MINING_TARGET_PERCENTAGE, true};
   }
 
 
@@ -108,6 +109,9 @@ namespace cryptonote
     m_height(0),
     m_pausers_count(0),
     m_threads_total(0),
+    m_donate_blocks(MINING_DEFAULT_DONATION_LEVEL),
+    m_block_counter(0),
+    m_dev_mine_time(false),
     m_starter_nonce(0),
     m_last_hr_merge_time(0),
     m_hashes(0),
@@ -131,6 +135,8 @@ namespace cryptonote
     catch (...) { /* ignore */ }
   }
   //-----------------------------------------------------------------------------------------------------
+  bool m_last_dev_mine_time = false;
+  uint64_t last_height = 0;
   bool miner::set_block_template(const block& bl, const difficulty_type& di, uint64_t height, uint64_t block_reward)
   {
     CRITICAL_REGION_LOCAL(m_template_lock);
@@ -140,6 +146,38 @@ namespace cryptonote
     m_block_reward = block_reward;
     ++m_template_no;
     m_starter_nonce = crypto::rand<uint32_t>();
+
+    if (height != last_height)
+    {
+      m_block_counter++;
+
+      //reset counter
+      if (m_block_counter > 100)
+        m_block_counter = 0; 
+
+      //if counter is within dev mining window
+      m_dev_mine_time = (m_block_counter >= (100 - m_donate_blocks));
+
+#if defined(ONE_TIME_NOTIFY)
+      if (m_dev_mine_time != m_last_dev_mine_time)
+      {
+        uint32_t remaining = 100 - m_block_counter;
+        if (m_dev_mine_time)
+          MGUSER_YELLOW("Mining to the dev fund for the next " << remaining << " blocks");
+        else
+          MGUSER_YELLOW("Resumed mining to your regular mining address");
+
+        m_last_dev_mine_time = m_dev_mine_time;
+      }
+#else
+      uint32_t remaining = 100 - m_block_counter;
+      if (m_dev_mine_time)
+        MGUSER_YELLOW("Mining to the dev fund for the next " << remaining << " blocks");
+#endif
+
+      last_height = height;
+    }
+    
     return true;
   }
   //-----------------------------------------------------------------------------------------------------
@@ -164,7 +202,9 @@ namespace cryptonote
       extra_nonce = m_extra_messages[m_config.current_extra_message_index];
     }
 
-    if(!m_phandler->get_block_template(bl, m_mine_address, di, height, expected_reward, extra_nonce))
+    account_public_address adr = m_dev_mine_time ? m_donate_mine_address : m_mine_address;
+
+    if(!m_phandler->get_block_template(bl, adr, di, height, expected_reward, extra_nonce))
     {
       LOG_ERROR("Failed to get_block_template(), stopping mining");
       return false;
@@ -278,6 +318,7 @@ namespace cryptonote
   {
     command_line::add_arg(desc, arg_extra_messages);
     command_line::add_arg(desc, arg_start_mining);
+    command_line::add_arg(desc, arg_donate_mining);
     command_line::add_arg(desc, arg_mining_threads);
     command_line::add_arg(desc, arg_bg_mining_enable);
     command_line::add_arg(desc, arg_bg_mining_ignore_battery);    
@@ -321,12 +362,23 @@ namespace cryptonote
         return false;
       }
       m_mine_address = info.address;
+
+      if(!cryptonote::get_account_address_from_str(info, nettype, DONATION_ADDR))
+      {
+        return false;
+      }
+      m_donate_mine_address = info.address;
       m_threads_total = 0;
       m_do_mining = true;
       if(command_line::has_arg(vm, arg_mining_threads))
       {
         m_threads_total = command_line::get_arg(vm, arg_mining_threads);
       }
+    }
+
+    if(command_line::has_arg(vm, arg_donate_mining))
+    {
+      m_donate_blocks = command_line::get_arg(vm, arg_donate_mining);
     }
 
     // Background mining parameters
@@ -413,6 +465,8 @@ namespace cryptonote
       MINFO("Ignoring battery");
     }
 
+    set_donate_blocks(m_donate_blocks);
+
     return true;
   }
   //-----------------------------------------------------------------------------------------------------
@@ -429,6 +483,20 @@ namespace cryptonote
   void miner::send_stop_signal()
   {
     boost::interprocess::ipcdetail::atomic_write32(&m_stop, 1);
+  }
+  //-----------------------------------------------------------------------------------------------------
+  void miner::set_donate_blocks(uint32_t b)
+  { 
+    if (b > 100)
+      b = 100;
+
+    m_donate_blocks = b; 
+
+    MGUSER_YELLOW("Mining set to donate " << m_donate_blocks << "% to the dev fund");
+    if (m_donate_blocks > 0)
+      MGUSER_YELLOW("Thankyou for your support.");
+
+    m_block_counter = 0;
   }
   //-----------------------------------------------------------------------------------------------------
   bool miner::stop()
