@@ -2029,6 +2029,8 @@ namespace cryptonote
       std::string status;
       bool update;
       std::string version;
+      std::string codename;
+      std::string release_note;
       std::string uri;
       std::string hash;
 
