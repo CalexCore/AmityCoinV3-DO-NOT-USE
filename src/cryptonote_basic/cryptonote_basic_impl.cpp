@@ -70,7 +70,7 @@ namespace cryptonote {
   //-----------------------------------------------------------------------------------------------
   size_t get_min_block_size(uint8_t version)
   {
-    return CRYPTONOTE_BLOCK_GRANTED_FULL_REWARD_ZONE;
+    return CRYPTONOTE_BLOCK_GRANTED_FULL_REWARD_ZONE_V1;
   }
   //-----------------------------------------------------------------------------------------------
   size_t get_max_block_size()
@@ -83,6 +83,7 @@ namespace cryptonote {
     return CRYPTONOTE_MAX_TX_SIZE;
   }
   //-----------------------------------------------------------------------------------------------
+
   bool get_block_reward(size_t median_size, uint64_t already_generated_coins, uint64_t &reward, uint8_t version)
   {
     //todo: block reward changes go here
@@ -95,10 +96,38 @@ namespace cryptonote {
       reward = GENESIS_BLOCK_REWARD;
       return true;
     }
-
+  
     if (version >= 0)
         reward = BLOCK_REWARD;
 
+    if (current_block_size <= median_size) {
+      reward = base_reward;
+      return true;
+    }
+
+    if(current_block_size > 2 * median_size) {
+      MERROR("Block cumulative size is too big: " << current_block_size << ", expected less than " << 2 * median_size);
+      return false;
+    }
+
+    assert(median_size < std::numeric_limits<uint32_t>::max());
+    assert(current_block_size < std::numeric_limits<uint32_t>::max());
+
+    uint64_t product_hi;
+    // BUGFIX: 32-bit saturation bug (e.g. ARM7), the result was being
+    // treated as 32-bit by default.
+    uint64_t multiplicand = 2 * median_size - current_block_size;
+    multiplicand *= current_block_size;
+    uint64_t product_lo = mul128(base_reward, multiplicand, &product_hi);
+
+    uint64_t reward_hi;
+    uint64_t reward_lo;
+    div128_32(product_hi, product_lo, static_cast<uint32_t>(median_size), &reward_hi, &reward_lo);
+    div128_32(reward_hi, reward_lo, static_cast<uint32_t>(median_size), &reward_hi, &reward_lo);
+    assert(0 == reward_hi);
+    assert(reward_lo < base_reward);
+
+    reward = reward_lo;
     return true;
   }
   //------------------------------------------------------------------------------------

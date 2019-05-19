@@ -1170,9 +1170,9 @@ bool Blockchain::validate_miner_transaction(const block& b, size_t cumulative_bl
 
   partial_block_reward = false;
 
-    std::vector<size_t> last_blocks_sizes;
+  std::vector<size_t> last_blocks_sizes;
   get_last_n_blocks_sizes(last_blocks_sizes, CRYPTONOTE_REWARD_BLOCKS_WINDOW);
-  if (!get_block_reward(epee::misc_utils::median(last_blocks_sizes), already_generated_coins, base_reward, version))
+  if (!get_block_reward(epee::misc_utils::median(last_blocks_sizes), cumulative_block_size, already_generated_coins, base_reward, version))
   {
     MERROR_VER("block size " << cumulative_block_size << " is bigger than allowed for this blockchain");
     return false;
@@ -1184,10 +1184,12 @@ bool Blockchain::validate_miner_transaction(const block& b, size_t cumulative_bl
 
   if(max_block_reward != money_in_use && already_generated_coins > 0)
   {
+
     MERROR_VER("coinbase transaction doesn't use full amount of block reward:  spent: " << money_in_use 
     << ",  max block reward " << max_block_reward << "(" << base_reward << "+" << fee << ")");
+
       return false;
-  }
+    }
 
   return true;
 }
@@ -1318,7 +1320,9 @@ bool Blockchain::create_block_template(block& b, const account_public_address& m
    */
   //make blocks coin-base tx looks close to real coinbase tx to get truthful blob size
   uint8_t hf_version = m_hardfork->get_current_version();
+
   bool r = construct_miner_tx(height, median_size, already_generated_coins, fee, miner_address, b.miner_tx, ex_nonce, 0, hf_version);
+
   CHECK_AND_ASSERT_MES(r, false, "Failed to construct miner tx, first chance");
   size_t cumulative_size = txs_size + get_object_blobsize(b.miner_tx);
 #if defined(DEBUG_CREATE_BLOCK_TEMPLATE)
@@ -1327,7 +1331,9 @@ bool Blockchain::create_block_template(block& b, const account_public_address& m
 #endif
   for (size_t try_count = 0; try_count != 10; ++try_count)
   {
+
     r = construct_miner_tx(height, median_size, already_generated_coins, fee, miner_address, b.miner_tx, ex_nonce, 0, hf_version);
+
 
     CHECK_AND_ASSERT_MES(r, false, "Failed to construct miner tx, second chance");
     size_t coinbase_blob_size = get_object_blobsize(b.miner_tx);
@@ -2884,14 +2890,47 @@ void Blockchain::check_ring_signature(const crypto::hash &tx_prefix_hash, const 
 }
 
 //------------------------------------------------------------------
-uint64_t Blockchain::get_dynamic_per_kb_fee(uint8_t version)
+static uint64_t get_fee_quantization_mask()
 {
-  //todo: if wanting to change the fee at a hardfork, add the amount here
-  switch (version)
+  LOG_PRINT_L3("Blockchain::" << __func__);
+
+  static uint64_t mask = 0;
+  if (mask == 0)
   {
-    default:
-      return PER_KB_BASE_FEE;
+    mask = 1;
+    for (size_t n = PER_KB_FEE_QUANTIZATION_DECIMALS; n < CRYPTONOTE_DISPLAY_DECIMAL_POINT; ++n)
+      mask *= 10;
   }
+  return mask;
+}
+
+//------------------------------------------------------------------
+uint64_t Blockchain::get_dynamic_per_kb_fee(uint64_t block_reward, size_t median_block_size, uint8_t version)
+{
+  LOG_PRINT_L3("Blockchain::" << __func__);
+
+  const uint64_t min_block_size = get_min_block_size(version);
+  const uint64_t fee_per_kb_base = DYNAMIC_FEE_PER_KB_BASE_FEE;
+
+  if (median_block_size < min_block_size)
+    median_block_size = min_block_size;
+
+  uint64_t unscaled_fee_per_kb = (fee_per_kb_base * min_block_size / median_block_size);
+  uint64_t hi, lo = mul128(unscaled_fee_per_kb, block_reward, &hi);
+  static_assert(DYNAMIC_FEE_PER_KB_BASE_BLOCK_REWARD % 1000000 == 0, "DYNAMIC_FEE_PER_KB_BASE_BLOCK_REWARD must be divisible by 1000000");
+  static_assert(DYNAMIC_FEE_PER_KB_BASE_BLOCK_REWARD / 1000000 <= std::numeric_limits<uint32_t>::max(), "DYNAMIC_FEE_PER_KB_BASE_BLOCK_REWARD is too large");
+
+  // divide in two steps, since the divisor must be 32 bits, but DYNAMIC_FEE_PER_KB_BASE_BLOCK_REWARD isn't
+  div128_32(hi, lo, DYNAMIC_FEE_PER_KB_BASE_BLOCK_REWARD / 1000000, &hi, &lo);
+  div128_32(hi, lo, 1000000, &hi, &lo);
+  assert(hi == 0);
+
+  // quantize fee up to 8 decimals
+  uint64_t mask = get_fee_quantization_mask();
+  uint64_t qlo = (lo + mask - 1) / mask * mask;
+  MDEBUG("lo " << print_money(lo) << ", qlo " << print_money(qlo) << ", mask " << mask);
+
+  return qlo;
 }
 
 //------------------------------------------------------------------
@@ -2899,7 +2938,17 @@ bool Blockchain::check_fee(size_t blob_size, uint64_t fee) const
 {
   const uint8_t version = get_current_hard_fork_version();
 
-  uint64_t fee_per_kb = get_dynamic_per_kb_fee(version);
+  uint64_t fee_per_kb;
+  // dynamic fee from v1, in if-true clause for easier merges
+  if (true)
+  {
+    uint64_t median = m_current_block_cumul_sz_limit / 2;
+    uint64_t already_generated_coins = m_db->height() ? m_db->get_block_already_generated_coins(m_db->height() - 1) : 0;
+    uint64_t base_reward;
+    if (!get_block_reward(median, 1, already_generated_coins, base_reward, version))
+      return false;
+    fee_per_kb = get_dynamic_per_kb_fee(base_reward, median, version);
+  }
   MDEBUG("Using " << print_money(fee_per_kb) << "/kB fee");
 
   uint64_t needed_fee = blob_size / 1024;
@@ -2915,10 +2964,36 @@ bool Blockchain::check_fee(size_t blob_size, uint64_t fee) const
 }
 
 //------------------------------------------------------------------
-uint64_t Blockchain::get_dynamic_per_kb_fee_estimate() const
+uint64_t Blockchain::get_dynamic_per_kb_fee_estimate(uint64_t grace_blocks) const
 {
+  LOG_PRINT_L3("Blockchain::" << __func__);
+
   const uint8_t version = get_current_hard_fork_version();
-  return get_dynamic_per_kb_fee(version);
+
+  if (grace_blocks >= CRYPTONOTE_REWARD_BLOCKS_WINDOW)
+    grace_blocks = CRYPTONOTE_REWARD_BLOCKS_WINDOW - 1;
+
+  const uint64_t min_block_size = get_min_block_size(version);
+  std::vector<size_t> sz;
+  get_last_n_blocks_sizes(sz, CRYPTONOTE_REWARD_BLOCKS_WINDOW - grace_blocks);
+  for (size_t i = 0; i < grace_blocks; ++i)
+    sz.push_back(min_block_size);
+
+  uint64_t median = epee::misc_utils::median(sz);
+  if(median <= min_block_size)
+    median = min_block_size;
+
+  uint64_t already_generated_coins = m_db->height() ? m_db->get_block_already_generated_coins(m_db->height() - 1) : 0;
+  uint64_t base_reward;
+  if (!get_block_reward(median, 1, already_generated_coins, base_reward, version))
+  {
+    MERROR("Failed to determine block reward, using placeholder " << print_money(BLOCK_REWARD_OVERESTIMATE) << " as a high bound");
+    base_reward = BLOCK_REWARD_OVERESTIMATE;
+  }
+
+  uint64_t fee = get_dynamic_per_kb_fee(base_reward, median, version);
+  MDEBUG("Estimating " << grace_blocks << "-block fee at " << print_money(fee) << "/kB");
+  return fee;
 }
 
 //------------------------------------------------------------------
@@ -3401,11 +3476,13 @@ leave:
   size_t block_size = cumulative_block_size;
   difficulty_type cumulative_difficulty = current_diffic;
   difficulty_type cumulative_weight = current_diffic;
+
   //todo: need a secondary counter when this passes the maximum of a uint64_t if we want to continue counting
   if (already_generated_coins + base_reward >= ((uint64_t)-1))
 	  already_generated_coins = ((uint64_t)-1);
   else
     already_generated_coins += base_reward;
+
 
   if(m_db->height())
   {

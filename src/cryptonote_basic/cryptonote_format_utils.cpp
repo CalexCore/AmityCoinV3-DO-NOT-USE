@@ -786,12 +786,16 @@ namespace cryptonote
       decimal_point = default_decimal_point;
     switch (decimal_point)
     {
-      case 6:
+      case 12:
         return "amit";
+      case 9:
+        return "milliamit";
+      case 6:
+        return "microamit";
       case 3:
-        return "mittie";
+        return "nanoamit";
       case 0:
-        return "littlemittie";
+        return "picoamit";
       default:
         ASSERT_MES_AND_THROW("Invalid decimal point specification: " << decimal_point);
     }
@@ -1021,9 +1025,11 @@ namespace cryptonote
     }
   }
 
+
   #define CN_SOFT_SHELL_WINDOW              128
   #define CN_SOFT_SHELL_ITER_MULTIPLIER     1
   static uint32_t iters = 0;
+
 
   bool get_block_longhash_v1(const block& b, crypto::hash& res, uint64_t height, const cryptonote::Blockchain* bc)
   {

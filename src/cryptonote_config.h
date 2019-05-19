@@ -61,12 +61,17 @@
 #define PER_KB_BASE_FEE                                 ((uint64_t)5000)              //0.005 amit                           
 
 #define CRYPTONOTE_REWARD_BLOCKS_WINDOW                 100
-#define CRYPTONOTE_BLOCK_GRANTED_FULL_REWARD_ZONE       300000
+#define CRYPTONOTE_BLOCK_GRANTED_FULL_REWARD_ZONE_V1    300000
+#define CRYPTONOTE_BLOCK_GRANTED_FULL_REWARD_ZONE_V2    CRYPTONOTE_BLOCK_GRANTED_FULL_REWARD_ZONE_V1
 #define CRYPTONOTE_COINBASE_BLOB_RESERVED_SIZE          600
-#define CRYPTONOTE_DISPLAY_DECIMAL_POINT                6
+#define CRYPTONOTE_DISPLAY_DECIMAL_POINT                9
+// COIN - number of smallest units in one coin
+#define COIN                                            ((uint64_t)1000000000000) // pow(10, 12)
 
 #define DEFAULT_MIXIN                                   4
 #define DEFAULT_RINGSIZE                                DEFAULT_MIXIN + 1
+#define DYNAMIC_FEE_PER_KB_BASE_FEE                     ((uint64_t)400000000) // 4 * pow(10,8)))
+#define DYNAMIC_FEE_PER_KB_BASE_BLOCK_REWARD            ((uint64_t)10000000000000) // 10 * pow(10,12)
 
 #define DIFFICULTY_TARGET                               120  // seconds
 
@@ -123,6 +128,7 @@
 #define MINER_CONFIG_FILE_NAME                          "miner_conf.json"
 
 #define THREAD_STACK_SIZE                               5 * 1024 * 1024
+#define PER_KB_FEE_QUANTIZATION_DECIMALS                8
 #define HASH_OF_HASHES_STEP                             256
 #define DEFAULT_TXPOOL_MAX_SIZE                         648000000ull // 3 days at 300000, in bytes
 
@@ -154,7 +160,7 @@ namespace config
     uint32_t const GENESIS_NONCE = 10000;
 
     std::string const HF_MIN_VERSION = "0.0.0.1";
-    std::string const MIN_VERSION    = "0..0.0.1";
+    std::string const MIN_VERSION    = "0.0.0.1";
     
     std::set<std::string> const seed_nodes = { 
         "3.17.175.98:41018",

@@ -2122,7 +2122,7 @@ namespace cryptonote
     if (use_bootstrap_daemon_if_necessary<COMMAND_RPC_GET_PER_KB_FEE_ESTIMATE>(invoke_http_mode::JON_RPC, "get_fee_estimate", req, res, r))
       return r;
 
-    res.fee = m_core.get_blockchain_storage().get_dynamic_per_kb_fee_estimate();
+    res.fee = m_core.get_blockchain_storage().get_dynamic_per_kb_fee_estimate(req.grace_blocks);
     res.status = CORE_RPC_STATUS_OK;
     return true;
   }

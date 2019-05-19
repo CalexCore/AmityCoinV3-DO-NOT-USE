@@ -108,6 +108,8 @@ using namespace cryptonote;
 #define RECENT_OUTPUT_ZONE ((time_t)(RECENT_OUTPUT_DAYS * 86400))
 #define RECENT_OUTPUT_BLOCKS (RECENT_OUTPUT_DAYS * 720)
 
+#define FEE_ESTIMATE_GRACE_BLOCKS 10 // estimate fee valid for that many blocks
+
 #define SECOND_OUTPUT_RELATEDNESS_THRESHOLD 0.0f
 
 #define SUBADDRESS_LOOKAHEAD_MAJOR 50
@@ -6718,7 +6720,12 @@ uint64_t wallet2::get_fee_multiplier(uint32_t priority) const
 //----------------------------------------------------------------------------------------------------
 uint64_t wallet2::get_dynamic_per_kb_fee_estimate() const
 {
-  return PER_KB_BASE_FEE;
+  uint64_t fee;
+  boost::optional<std::string> result = m_node_rpc_proxy.get_dynamic_per_kb_fee_estimate(FEE_ESTIMATE_GRACE_BLOCKS, fee);
+  if (!result)
+    return fee;
+  LOG_PRINT_L1("Failed to query per kB fee, using " << print_money(DYNAMIC_FEE_PER_KB_BASE_BLOCK_REWARD));
+  return DYNAMIC_FEE_PER_KB_BASE_BLOCK_REWARD;
 }
 //----------------------------------------------------------------------------------------------------
 uint64_t wallet2::get_per_kb_fee() const
@@ -9672,7 +9679,7 @@ uint64_t wallet2::get_upper_transaction_size_limit() const
 {
   if (m_upper_transaction_size_limit > 0)
     return m_upper_transaction_size_limit;
-  uint64_t full_reward_zone = CRYPTONOTE_BLOCK_GRANTED_FULL_REWARD_ZONE;
+  uint64_t full_reward_zone = CRYPTONOTE_BLOCK_GRANTED_FULL_REWARD_ZONE_V1;
   return full_reward_zone - CRYPTONOTE_COINBASE_BLOB_RESERVED_SIZE;
 }
 //----------------------------------------------------------------------------------------------------
