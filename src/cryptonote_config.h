@@ -57,7 +57,7 @@
 #define CRYPTONOTE_BLOCK_FUTURE_TIME_LIMIT              60*5
 
 #define BLOCK_REWARD                                    ((uint64_t)186000000)         //186 amit
-#define GENESIS_BLOCK_REWARD                            ((uint64_t)22000000000000)    //19M amit
+#define GENESIS_BLOCK_REWARD                            ((uint64_t)26859932000000)    //26,859,932.000000 amit
 #define PER_KB_BASE_FEE                                 ((uint64_t)5000)              //0.005 amit                           
 
 #define CRYPTONOTE_REWARD_BLOCKS_WINDOW                 100
@@ -147,9 +147,9 @@ namespace config
     uint16_t const P2P_DEFAULT_PORT = 41018;
     uint16_t const RPC_DEFAULT_PORT = 51018;
     uint16_t const ZMQ_RPC_DEFAULT_PORT = 37113;
-    boost::uuids::uuid const NETWORK_ID = {{0x42, 0x38, 0xB1, 0x75, 0x61, 0x04, 0x41, 0x21, 0x17, 0x31, 0x01, 0x82, 0x16, 0xA1, 0xB1, 0x52}};
+    boost::uuids::uuid const NETWORK_ID = {{0x42, 0x38, 0xB1, 0x75, 0x01, 0x82, 0x16, 0xA1, 0x61, 0x04, 0x41, 0x21, 0x17, 0x31, 0xB1, 0x52}};
     std::string const GENESIS_TX = 
-    "01e80201ff000180c0bdb1a48005022ba93a5a25f0acc40dee21a8bcdae31726d4847d17ce1bfcf8f7a6f7bca4eeb321010c834dea559f980df9bcbf9d4fab3d3a46841fd8f70fcc23e5fa995c66b8e7dc00";
+    "01e80201ff000180bed285dd8d06026ca32c5a66b9d7cb7cb76dbea605fffe5f501ddec0d0dec193c5fea177589a8d21012137037f61b653a39be231017497f553868213197f35d74761474c30b66a99b800";
 
     uint32_t const GENESIS_NONCE = 10000;
 
@@ -157,8 +157,10 @@ namespace config
     std::string const MIN_VERSION    = "0.0.0.1";
     
     std::set<std::string> const seed_nodes = { 
-        "0.0.0.0:41018",
-        "0.0.0.0:41018"
+        "51.75.92.73:41018", // GERMANY
+        "54.39.178.95:41018", // CANADA
+        "3.17.204.129:41018", // USA
+        "3.0.147.172:41018" // SINGAPORE
     };
 
     static const hard_fork hard_forks[] = {
