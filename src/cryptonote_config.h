@@ -154,11 +154,11 @@ namespace config
     uint32_t const GENESIS_NONCE = 10000;
 
     std::string const HF_MIN_VERSION = "0.0.0.1";
-    std::string const MIN_VERSION    = "0..0.0.1";
+    std::string const MIN_VERSION    = "0.0.0.1";
     
     std::set<std::string> const seed_nodes = { 
-        "3.17.175.98:41018",
-        "18.191.186.200:41018"
+        "0.0.0.0:41018",
+        "0.0.0.0:41018"
     };
 
     static const hard_fork hard_forks[] = {
