@@ -19,7 +19,7 @@ if [ $(uname) == "Linux" ]; then
 			sudo apt install -y \
 			git curl ca-certificates nano zip unzip tar xz-utils cmake g++ make pkg-config libtool-bin autoconf \
 			automake build-essential cmake pkg-config pcsc-tools pcscd libpcsclite1 python-dev virtualenv \
-			libudev-dev libhidapi-dev libzmq3-dev libunbound-dev boost-dev-all libusb-1.0-0-dev libusb-dev \
+			libudev-dev libhidapi-dev libzmq3-dev libunbound-dev libboost-dev-all libusb-1.0-0-dev libusb-dev \
 			libssl-dev libsodium-dev libcurl4-openssl-dev libminiupnpc-dev libunwind8-dev liblzma-dev \
 			libreadline6-dev libldns-dev libexpat1-dev libgtest-dev doxygen graphviz libhidapi-libusb0
 		elif [ $AMITY_BUILD_DISTRO == "fedora" ]; then
