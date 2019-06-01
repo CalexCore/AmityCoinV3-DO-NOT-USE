@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2018, The Monero Project
+// Copyright (c) 2014-2019, The Monero Project
 // 
 // All rights reserved.
 // 
@@ -67,16 +67,20 @@ public:
     m_core.set_cryptonote_protocol(&protocol);
   }
 
-
   bool run()
   {
     //initialize core here
-    MGUSER("Initializing core...");
-    if (!m_core.init(m_vm_HACK, nullptr))
+    MGINFO("Initializing core...");
+#if defined(PER_BLOCK_CHECKPOINT)
+    const cryptonote::GetCheckpointsCallback& get_checkpoints = blocks::GetCheckpointsData;
+#else
+    const cryptonote::GetCheckpointsCallback& get_checkpoints = nullptr;
+#endif
+    if (!m_core.init(m_vm_HACK, nullptr, get_checkpoints))
     {
       return false;
     }
-    MGUSER("Core initialized OK");
+    MGINFO("Core initialized OK");
     return true;
   }
 
@@ -87,7 +91,7 @@ public:
 
   ~t_core()
   {
-    MGUSER("Deinitializing core...");
+    MGINFO("Deinitializing core...");
     try {
       m_core.deinit();
       m_core.set_cryptonote_protocol(nullptr);
