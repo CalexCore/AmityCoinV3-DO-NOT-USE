@@ -48,7 +48,7 @@
 #define CURRENT_TRANSACTION_VERSION                     1
 #define CURRENT_BLOCK_MAJOR_VERSION                     1
 #define CURRENT_BLOCK_MINOR_VERSION                     1
-#define CRYPTONOTE_DEFAULT_TX_SPENDABLE_AGE             1
+#define CRYPTONOTE_DEFAULT_TX_SPENDABLE_AGE             8
 
 #define BULLETPROOF_MAX_OUTPUTS                         16
 #define BULLETPROOF_SIMPLE_FORK_HEIGHT                  1
