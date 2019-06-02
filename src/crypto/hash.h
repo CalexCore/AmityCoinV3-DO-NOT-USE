@@ -1,3 +1,4 @@
+// Copyright (c) 2018-2019, The NERVA Project
 // Copyright (c) 2014-2018, The Monero Project
 // 
 // All rights reserved.
@@ -71,25 +72,16 @@ namespace crypto {
     return h;
   }
 
-  inline void cn_slow_hash_v1(const void *data, size_t length, hash &hash, size_t iters, random_values *r, char *sp_bytes, uint8_t init_size_blk, uint16_t xx, uint16_t yy){
-    cn_slow_hash_v1(data, length, reinterpret_cast<char *>(&hash), iters, r, sp_bytes, init_size_blk, xx, yy);
+  inline void cn_slow_hash_v1(cn_hash_context_t *context, const void *data, size_t length, hash &hash, size_t iters, uint8_t init_size_blk, uint16_t xx, uint16_t yy) {
+    cn_slow_hash_v1(context, data, length, reinterpret_cast<char *>(&hash), iters, init_size_blk, xx, yy);
   }
 
-  inline void cn_slow_hash(const void *data, std::size_t length, hash &hash) {
-    cn_slow_hash(data, length, reinterpret_cast<char *>(&hash), 0);
-  }
-
-  inline void cn_slow_hash_prehashed(const void *data, std::size_t length, hash &hash) {
-    cn_slow_hash(data, length, reinterpret_cast<char *>(&hash), 1);
+  inline void cn_slow_hash(cn_hash_context_t *context, const void *data, std::size_t length, hash &hash) {
+    cn_slow_hash(context, data, length, reinterpret_cast<char *>(&hash), 0);
   }
 
   inline void tree_hash(const hash *hashes, std::size_t count, hash &root_hash) {
     tree_hash(reinterpret_cast<const char (*)[HASH_SIZE]>(hashes), count, reinterpret_cast<char *>(&root_hash));
-  }
-
-  inline char* get_salt(void)
-  {
-    return get_salt_state();
   }
 
   inline std::ostream &operator <<(std::ostream &o, const crypto::hash &v) {

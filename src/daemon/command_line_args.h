@@ -1,4 +1,5 @@
-// Copyright (c) 2014-2018, The Monero Project
+// Copyright (c) 2018-2019, The NERVA Project
+// Copyright (c) 2014-2019, The Monero Project
 // 
 // All rights reserved.
 // 
@@ -84,9 +85,10 @@ namespace daemon_args
     "daemon_command"
   , "Hidden"
   };
-  const command_line::arg_descriptor<bool> arg_create_genesis_tx = {
+  const command_line::arg_descriptor<std::uint64_t> arg_create_genesis_tx = {
     "create-genesis-tx"
   , "You shouldn't need help"
+  , 0
   };
   const command_line::arg_descriptor<bool> arg_os_version = {
     "os-version"

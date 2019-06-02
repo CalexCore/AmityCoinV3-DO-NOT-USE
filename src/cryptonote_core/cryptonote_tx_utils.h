@@ -1,5 +1,5 @@
-// Copyright (c) 2017-2018, The Masari Project
-// Copyright (c) 2014-2018, The Monero Project
+// Copyright (c) 2019, The Amity Project
+// Copyright (c) 2014-2019, The Monero Project
 // 
 // All rights reserved.
 // 
@@ -35,13 +35,20 @@
 #include <boost/serialization/utility.hpp>
 #include "ringct/rctOps.h"
 
+namespace crypto
+{
+  struct cn_hash_context;
+  typedef struct cn_hash_context cn_hash_context_t;
+}
+
 namespace cryptonote
 {
+  class Blockchain;
   //---------------------------------------------------------------
   bool construct_miner_tx(size_t height, size_t median_size, uint64_t already_generated_coins, uint64_t fee, const account_public_address &miner_address, 
     transaction& tx, const blobdata& extra_nonce = blobdata(), size_t max_outs = 999, uint8_t hard_fork_version = 1);
 
-  bool construct_genesis_tx(transaction& tx);
+  bool construct_genesis_tx(transaction& tx, uint64_t amount);
 
   struct tx_source_entry
   {
@@ -56,9 +63,6 @@ namespace cryptonote
     bool rct = true;                    //true if the output is rct (always in MSR)
     rct::key mask;                      //ringct amount mask
     rct::multisig_kLRki multisig_kLRki; //multisig info
-
-    //todo: does this need to be v2?
-    void push_output(uint64_t idx, const crypto::public_key &k, uint64_t amount) { outputs.push_back(std::make_pair(idx, rct::ctkey({rct::pk2rct(k), rct::zeroCommit_v1(amount)}))); }
 
     BEGIN_SERIALIZE_OBJECT()
       FIELD(outputs)
@@ -110,6 +114,12 @@ namespace cryptonote
                                       crypto::public_key &out_eph_public_key) ;
 
   bool generate_genesis_block(block& bl);
+
+  #define CN_SOFT_SHELL_WINDOW              128
+  #define CN_SOFT_SHELL_ITER_MULTIPLIER     1
+  static uint32_t iters = 0;
+  bool get_block_longhash(crypto::cn_hash_context_t *context, Blockchain *bc, const block& b, crypto::hash& res, const uint64_t height);
+  bool get_block_longhash_v1(crypto::cn_hash_context_t *context, Blockchain *bc, const block& b, crypto::hash& res, uint64_t height);
 
 }
 

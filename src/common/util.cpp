@@ -1,3 +1,4 @@
+// Copyright (c) 2019, The NERVA Project
 // Copyright (c) 2014-2019, The Monero Project
 // 
 // All rights reserved.
@@ -779,7 +780,7 @@ std::string get_nix_version_display_string()
 #if !defined NO_AES
     if (!crypto::has_aesni())
     {
-        MERROR(
+        MGUSER_RED(
             "This executable requires AES-NI support, which is not available on your machine."
             " To correct this issue, try rebuilding with compilation flag -DNO_AES.");
         return false;
@@ -1115,4 +1116,5 @@ std::string get_nix_version_display_string()
     const std::uint64_t divisor = size->bytes / 1024;
     return (boost::format(size->format) % (double(bytes) / divisor)).str();
   }
+
 }

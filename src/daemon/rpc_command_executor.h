@@ -6,7 +6,8 @@
 
 */
 
-// Copyright (c) 2014-2018, The Monero Project
+// Copyright (c) 2018-2019, The NERVA Project
+// Copyright (c) 2014-2019, The Monero Project
 // 
 // All rights reserved.
 // 
@@ -36,7 +37,6 @@
 //
 // Parts of this file are originally copyright (c) 2012-2013 The Cryptonote developers
 
-
 #pragma once
 
 #include <boost/optional/optional_fwd.hpp>
@@ -44,6 +44,7 @@
 #include "common/common_fwd.h"
 #include "common/rpc_client.h"
 #include "cryptonote_basic/cryptonote_basic.h"
+#include "net/net_fwd.h"
 #include "rpc/core_rpc_server.h"
 
 #undef MONERO_DEFAULT_LOG_CATEGORY
@@ -62,6 +63,7 @@ public:
       uint32_t ip
     , uint16_t port
     , const boost::optional<tools::login>& user
+    , const epee::net_utils::ssl_options_t& ssl_options
     , bool is_rpc = true
     , cryptonote::core_rpc_server* rpc_server = NULL
     );
@@ -92,11 +94,11 @@ public:
 
   bool print_height();
 
-  bool print_block_by_hash(crypto::hash block_hash);
+  bool print_block_by_hash(crypto::hash block_hash, bool include_hex);
 
-  bool print_block_by_height(uint64_t height);
+  bool print_block_by_height(uint64_t height, bool include_hex);
 
-  bool print_transaction(crypto::hash transaction_hash, bool include_hex, bool include_json, bool prune);
+  bool print_transaction(crypto::hash transaction_hash, bool include_hex, bool include_json);
 
   bool is_key_image_spent(const crypto::key_image &ki);
 
@@ -154,7 +156,7 @@ public:
 
   bool print_tx_pubkey(std::string extra);
 
-  bool alt_chain_info();
+  bool alt_chain_info(const std::string &tip);
 
   bool print_blockchain_dynamic_stats(uint64_t nblocks);
 

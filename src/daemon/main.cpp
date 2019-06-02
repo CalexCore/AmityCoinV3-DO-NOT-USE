@@ -1,5 +1,5 @@
-// Copyright (c) 2014-2019, The Monero Project
 // Copyright (c) 2019, The NERVA Project
+// Copyright (c) 2014-2019, The Monero Project
 //
 // All rights reserved.
 //
@@ -228,13 +228,13 @@ int main(int argc, char const * argv[])
       return 1;
     }
 
-    bool gb = command_line::get_arg(vm, daemon_args::arg_create_genesis_tx);
+    uint64_t gb = command_line::get_arg(vm, daemon_args::arg_create_genesis_tx);
 
     if (gb)
     {
       cryptonote::transaction tx;
 
-      if (construct_genesis_tx(tx))
+      if (construct_genesis_tx(tx, gb))
       {
         std::stringstream ss;
         binary_archive<true> ba(ss);
@@ -277,7 +277,8 @@ int main(int argc, char const * argv[])
     bf::path log_file_path {data_dir / std::string(CRYPTONOTE_NAME ".log")};
     if (!command_line::is_arg_defaulted(vm, daemon_args::arg_log_file))
       log_file_path = command_line::get_arg(vm, daemon_args::arg_log_file);
-    log_file_path = bf::absolute(log_file_path, relative_path_base);
+    if (!log_file_path.has_parent_path())
+      log_file_path = bf::absolute(log_file_path, relative_path_base);
     mlog_configure(log_file_path.string(), true, command_line::get_arg(vm, daemon_args::arg_max_log_file_size), command_line::get_arg(vm, daemon_args::arg_max_log_files));
 
     // Set log level
@@ -342,7 +343,11 @@ int main(int argc, char const * argv[])
           }
         }
 
-        daemonize::t_command_server rpc_commands{rpc_ip, rpc_port, std::move(login)};
+        auto ssl_options = cryptonote::rpc_args::process_ssl(vm, true);
+        if (!ssl_options)
+          return 1;
+
+        daemonize::t_command_server rpc_commands{rpc_ip, rpc_port, std::move(login), std::move(*ssl_options)};
         if (rpc_commands.process_command_vec(command))
         {
           return 0;

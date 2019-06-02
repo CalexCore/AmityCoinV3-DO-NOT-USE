@@ -1,3 +1,4 @@
+// Copyright (c) 2018-2019, The NERVA Project
 // Copyright (c) 2014-2019, The Monero Project
 // 
 // All rights reserved.
@@ -43,10 +44,11 @@ t_command_server::t_command_server(
     uint32_t ip
   , uint16_t port
   , const boost::optional<tools::login>& login
+  , const epee::net_utils::ssl_options_t& ssl_options
   , bool is_rpc
   , cryptonote::core_rpc_server* rpc_server
   )
-  : m_parser(ip, port, login, is_rpc, rpc_server)
+  : m_parser(ip, port, login, ssl_options, is_rpc, rpc_server)
   , m_command_lookup()
   , m_is_rpc(is_rpc)
 {
@@ -302,7 +304,7 @@ t_command_server::t_command_server(
     m_command_lookup.set_handler(
       "check_update"
     , std::bind(&t_command_parser_executor::update, &m_parser, p::_1)
-    , "Check if an update is available, optionally downloads it if there is. Updating is not yet implemented."
+    , "Check if an update is available."
     );
     m_command_lookup.set_handler(
       "relay_tx"
