@@ -84,9 +84,6 @@ namespace analytics
 {
     bool contact_server(const bool testnet)
     {
-        //todo: not implemented
-        return false;
-
         std::set<std::string> url_list = testnet ? ::config::testnet::seed_nodes : ::config::seed_nodes;
 
         for (const std::string &a : url_list)
