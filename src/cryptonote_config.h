@@ -34,7 +34,7 @@
 
 #include <stdexcept>
 #include <string>
-#include <set>
+#include <vector>
 #include <boost/uuid/uuid.hpp>
 #include "misc_log_ex.h"
 
@@ -157,7 +157,7 @@ namespace config
     std::string const HF_MIN_VERSION = "0.0.0.1";
     std::string const MIN_VERSION    = "0.0.0.1";
     
-    std::set<std::string> const seed_nodes = { 
+    std::vector<std::string> const seed_nodes = { 
         "51.75.92.73:41018", // GERMANY
         "54.39.178.95:41018", // CANADA
         "3.17.204.129:41018", // USA
@@ -179,7 +179,7 @@ namespace config
         std::string const HF_MIN_VERSION = "0.0.0.1";
         std::string const MIN_VERSION    = "0.0.0.1";
 
-        std::set<std::string> const seed_nodes = {
+        std::vector<std::string> const seed_nodes = {
             "18.216.156.140:21111",
             "18.220.89.44:21111"
          };
@@ -199,7 +199,7 @@ namespace config
             0x24, 0x31, 0xF1, 0x72 , 0x54, 0x36 , 0x36, 0xFF, 0xBB, 0x51, 0x00, 0x3C, 0x3D, 0xAA, 0x16, 0x2F
         } }; // Bender's daydream
 
-		std::set<std::string> const seed_nodes = { };
+		std::vector<std::string> const seed_nodes = { };
 
         static const hard_fork hard_forks[] = {
             { 1,   1},

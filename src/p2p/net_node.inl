@@ -459,9 +459,9 @@ namespace nodetool
 
   //-----------------------------------------------------------------------------------
   template<class t_payload_net_handler>
-  std::set<std::string> node_server<t_payload_net_handler>::get_seed_nodes(cryptonote::network_type nettype) const
+  std::vector<std::string> node_server<t_payload_net_handler>::get_seed_nodes(cryptonote::network_type nettype) const
   {
-    std::set<std::string> full_addrs;
+    std::vector<std::string> full_addrs;
     if (nettype == cryptonote::TESTNET)
       full_addrs = ::config::testnet::seed_nodes;
     else if (nettype == cryptonote::STAGENET)
@@ -486,7 +486,7 @@ namespace nodetool
   template<class t_payload_net_handler>
   bool node_server<t_payload_net_handler>::init(const boost::program_options::variables_map& vm)
   {
-    std::set<std::string> full_addrs;
+    std::vector<std::string> full_addrs;
 
     bool res = handle_command_line(vm);
     CHECK_AND_ASSERT_MES(res, false, "Failed to handle command line");
@@ -570,7 +570,7 @@ namespace nodetool
         if (result.size())
         {
           for (const auto& addr_string : result)
-            full_addrs.insert(addr_string + ":" + std::to_string(cryptonote::get_config(m_nettype).P2P_DEFAULT_PORT));
+            full_addrs.push_back(addr_string + ":" + std::to_string(cryptonote::get_config(m_nettype).P2P_DEFAULT_PORT));
         }
         ++i;
       }
@@ -584,7 +584,7 @@ namespace nodetool
           MINFO("Not enough DNS seed nodes found, using fallback defaults too");
 
         for (const auto &peer: get_seed_nodes(cryptonote::MAINNET))
-          full_addrs.insert(peer);
+          full_addrs.push_back(peer);
         m_fallback_seed_nodes_added = true;
       }
     }
