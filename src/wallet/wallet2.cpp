@@ -386,8 +386,11 @@ std::unique_ptr<tools::wallet2> make_basic(const boost::program_options::variabl
   {
     const boost::string_ref real_daemon = boost::string_ref{daemon_address}.substr(0, daemon_address.rfind(':'));
 
+    /* If SSL or proxy is enabled, then a specific cert, CA or fingerprint must
+       be specified. This is specific to the wallet. */
     const bool verification_required =
-      ssl_options.support == epee::net_utils::ssl_support_t::e_ssl_support_enabled || use_proxy;
+      ssl_options.verification != epee::net_utils::ssl_verification_t::none &&
+      (ssl_options.support == epee::net_utils::ssl_support_t::e_ssl_support_enabled || use_proxy);
 
     THROW_WALLET_EXCEPTION_IF(
       verification_required && !ssl_options.has_strong_verification(real_daemon),
@@ -1239,8 +1242,10 @@ bool wallet2::get_multisig_seed(epee::wipeable_string& seed, const epee::wipeabl
 
   if (!passphrase.empty())
   {
+    crypto::cn_hash_context_t *hash_context = crypto::cn_hash_context_create();
     crypto::secret_key key;
-    crypto::cn_slow_hash(passphrase.data(), passphrase.size(), (crypto::hash&)key);
+    crypto::cn_slow_hash(hash_context, passphrase.data(), passphrase.size(), (crypto::hash&)key);
+    crypto::cn_hash_context_free(hash_context);
     sc_reduce32((unsigned char*)key.data);
     data = encrypt(data, key, true);
   }

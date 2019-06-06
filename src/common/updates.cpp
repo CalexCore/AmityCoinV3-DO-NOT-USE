@@ -1,5 +1,5 @@
-// Copyright (c) 2017-2019, The Monero Project
 // Copyright (c) 2019, The NERVA Project
+// Copyright (c) 2017-2019, The Monero Project
 // 
 // All rights reserved.
 // 
@@ -43,10 +43,6 @@ namespace tools
     std::vector<std::string> records;
     bool found = false;
 
-    //Forker: to disable dns update checks remove this url
-    //otherwise create a txt at your registrar in the following format
-    //<name>:<build-tag>:<version>:<hash>, i.e
-    //amity:linux-x64:0.0.0.0:<sha256>
     static const std::vector<std::string> dns_urls = {
       "update.getamitycoin.org",
     };
@@ -60,7 +56,7 @@ namespace tools
       boost::split(fields, record, boost::is_any_of(":"));
       if (fields.size() != 4)
       {
-        MWARNING("Update record does not have 4 fields: " << record);
+        MWARNING("Updates record does not have 4 fields: " << record);
         continue;
       }
 

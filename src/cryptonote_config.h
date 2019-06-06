@@ -34,8 +34,9 @@
 
 #include <stdexcept>
 #include <string>
-#include <set>
+#include <vector>
 #include <boost/uuid/uuid.hpp>
+#include "misc_log_ex.h"
 
 #define CRYPTONOTE_DNS_TIMEOUT_MS                       20000
 
@@ -47,7 +48,7 @@
 #define CURRENT_TRANSACTION_VERSION                     1
 #define CURRENT_BLOCK_MAJOR_VERSION                     1
 #define CURRENT_BLOCK_MINOR_VERSION                     1
-#define CRYPTONOTE_DEFAULT_TX_SPENDABLE_AGE             1
+#define CRYPTONOTE_DEFAULT_TX_SPENDABLE_AGE             8
 
 #define BULLETPROOF_MAX_OUTPUTS                         16
 #define BULLETPROOF_SIMPLE_FORK_HEIGHT                  1
@@ -57,7 +58,7 @@
 #define CRYPTONOTE_BLOCK_FUTURE_TIME_LIMIT              60*5
 
 #define BLOCK_REWARD                                    ((uint64_t)186000000)         //186 amit
-#define GENESIS_BLOCK_REWARD                            ((uint64_t)22000000000000)    //19M amit
+#define GENESIS_BLOCK_REWARD                            ((uint64_t)26859932000000)    //26,859,932.000000 amit
 #define PER_KB_BASE_FEE                                 ((uint64_t)5000)              //0.005 amit                           
 
 #define CRYPTONOTE_REWARD_BLOCKS_WINDOW                 100
@@ -147,18 +148,20 @@ namespace config
     uint16_t const P2P_DEFAULT_PORT = 41018;
     uint16_t const RPC_DEFAULT_PORT = 51018;
     uint16_t const ZMQ_RPC_DEFAULT_PORT = 37113;
-    boost::uuids::uuid const NETWORK_ID = {{0x42, 0x38, 0xB1, 0x75, 0x61, 0x04, 0x41, 0x21, 0x17, 0x31, 0x01, 0x82, 0x16, 0xA1, 0xB1, 0x52}};
+    boost::uuids::uuid const NETWORK_ID = {{0x42, 0x38, 0xB1, 0x75, 0x01, 0x82, 0x16, 0xA1, 0x61, 0x04, 0x41, 0x21, 0x17, 0x31, 0xB1, 0x52}};
     std::string const GENESIS_TX = 
-    "01e80201ff000180c0bdb1a48005022ba93a5a25f0acc40dee21a8bcdae31726d4847d17ce1bfcf8f7a6f7bca4eeb321010c834dea559f980df9bcbf9d4fab3d3a46841fd8f70fcc23e5fa995c66b8e7dc00";
+    "01e80201ff000180bed285dd8d06026ca32c5a66b9d7cb7cb76dbea605fffe5f501ddec0d0dec193c5fea177589a8d21012137037f61b653a39be231017497f553868213197f35d74761474c30b66a99b800";
 
     uint32_t const GENESIS_NONCE = 10000;
 
     std::string const HF_MIN_VERSION = "0.0.0.1";
-    std::string const MIN_VERSION    = "0..0.0.1";
+    std::string const MIN_VERSION    = "0.0.0.1";
     
-    std::set<std::string> const seed_nodes = { 
-        "3.17.175.98:41018",
-        "18.191.186.200:41018"
+    std::vector<std::string> const seed_nodes = { 
+        "51.75.92.73:41018", // GERMANY
+        "54.39.178.95:41018", // CANADA
+        "3.17.204.129:41018", // USA
+        "3.0.147.172:41018" // SINGAPORE
     };
 
     static const hard_fork hard_forks[] = {
@@ -176,7 +179,7 @@ namespace config
         std::string const HF_MIN_VERSION = "0.0.0.1";
         std::string const MIN_VERSION    = "0.0.0.1";
 
-        std::set<std::string> const seed_nodes = {
+        std::vector<std::string> const seed_nodes = {
             "18.216.156.140:21111",
             "18.220.89.44:21111"
          };
@@ -196,7 +199,7 @@ namespace config
             0x24, 0x31, 0xF1, 0x72 , 0x54, 0x36 , 0x36, 0xFF, 0xBB, 0x51, 0x00, 0x3C, 0x3D, 0xAA, 0x16, 0x2F
         } }; // Bender's daydream
 
-		std::set<std::string> const seed_nodes = { };
+		std::vector<std::string> const seed_nodes = { };
 
         static const hard_fork hard_forks[] = {
             { 1,   1},
@@ -218,9 +221,12 @@ inline uint32_t version_string_to_integer(std::string data)
     unsigned int byte0;
     char dummyString[2];
 
-    if (sscanf(v, "%u.%u.%u.%u%1s", &byte3, &byte2, &byte1, &byte0, dummyString) == 4)
+    if (sscanf(v, "%u.%u.%u%1s", &byte2, &byte1, &byte0, dummyString) == 3)
+        return (byte2 << 24) + (byte1 << 16) + byte0; //3 part versioning scheme
+    else if (sscanf(v, "%u.%u.%u.%u%1s", &byte3, &byte2, &byte1, &byte0, dummyString) == 4)
         return (byte3 << 24) + (byte2 << 16) + (byte1 << 8) + byte0;
 
+    MGUSER_RED("Cound not interpret version number");
     return 0;
 }
 

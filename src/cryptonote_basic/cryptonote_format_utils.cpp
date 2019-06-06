@@ -43,8 +43,8 @@
 #include "crypto/crypto.h"
 #include "crypto/hash.h"
 #include "crypto/hc128.h"
-#include "ringct/rctSigs.h"
 #include "cryptonote_core/blockchain.h"
+#include "ringct/rctSigs.h"
 
 using namespace epee;
 
@@ -126,6 +126,80 @@ namespace cryptonote
     return h;
   }
   //---------------------------------------------------------------
+  bool expand_transaction_1(transaction &tx, bool base_only)
+  {
+    if (!is_coinbase(tx))
+    {
+      rct::rctSig &rv = tx.rct_signatures;
+      if (rv.outPk.size() != tx.vout.size())
+      {
+        LOG_PRINT_L1("Failed to parse transaction from blob, bad outPk size in tx " << get_transaction_hash(tx));
+        return false;
+      }
+      for (size_t n = 0; n < tx.rct_signatures.outPk.size(); ++n)
+      {
+        if (tx.vout[n].target.type() != typeid(txout_to_key))
+        {
+          LOG_PRINT_L1("Unsupported output type in tx " << get_transaction_hash(tx));
+          return false;
+        }
+        rv.outPk[n].dest = rct::pk2rct(boost::get<txout_to_key>(tx.vout[n].target).key);
+      }
+
+      if (!base_only)
+      {
+        if (rv.type == rct::RCTTypeBulletproof1Simple || rv.type == rct::RCTTypeBulletproof1Full)
+        {
+          std::vector<rct::Bulletproof> &bps = rv.p.bulletproofs;
+          const size_t n_outputs = tx.vout.size();
+          const size_t n_bulletproofs = bps.size();
+          if (n_bulletproofs != n_outputs)
+          {
+            LOG_PRINT_L1("Failed to parse transaction from blob, bad bulletproofs size in tx " << get_transaction_hash(tx));
+            return false;
+          }
+          for (size_t i = 0; i < n_bulletproofs; i++)
+          {
+            rct::Bulletproof &bp = bps[i];
+            if (bp.L.size() != 6)
+            {
+              LOG_PRINT_L1("Failed to parse transaction from blob, bad bulletproofs L size in tx " << get_transaction_hash(tx));
+              return false;
+            }
+            bp.V.resize(1);
+            bp.V[0] = rv.outPk[i].mask;
+          }
+        }
+        else if (rv.type == rct::RCTTypeBulletproof2)
+        {
+          if (rv.p.bulletproofs.size() != 1)
+          {
+            LOG_PRINT_L1("Failed to parse transaction from blob, bad bulletproofs size in tx " << get_transaction_hash(tx));
+            return false;
+          }
+          rct::Bulletproof &bp = rv.p.bulletproofs[0];
+          if (bp.L.size() < 6)
+          {
+            LOG_PRINT_L1("Failed to parse transaction from blob, bad bulletproofs L size in tx " << get_transaction_hash(tx));
+            return false;
+          }
+          const size_t max_outputs = 1 << (bp.L.size() - 6);
+          const size_t n_outputs = tx.vout.size();
+          if (max_outputs < n_outputs)
+          {
+            LOG_PRINT_L1("Failed to parse transaction from blob, bad bulletproofs max outputs in tx " << get_transaction_hash(tx));
+            return false;
+          }
+          CHECK_AND_ASSERT_MES(n_outputs == rv.outPk.size(), false, "Internal error filling out V");
+          bp.V.resize(n_outputs);
+          for (size_t i = 0; i < n_outputs; ++i)
+            bp.V[i] = rct::scalarmultKey(rv.outPk[i].mask, rct::INV_EIGHT);
+        }
+      }
+    }
+    return true;
+  }
+  //---------------------------------------------------------------
   bool parse_and_validate_tx_from_blob(const blobdata& tx_blob, transaction& tx)
   {
     std::stringstream ss;
@@ -133,6 +207,7 @@ namespace cryptonote
     binary_archive<false> ba(ss);
     bool r = ::serialization::serialize(ba, tx);
     CHECK_AND_ASSERT_MES(r, false, "Failed to parse transaction from blob");
+    CHECK_AND_ASSERT_MES(expand_transaction_1(tx, false), false, "Failed to expand transaction data");
     tx.invalidate_hashes();
     tx.set_blob_size(tx_blob.size());
     return true;
@@ -145,6 +220,7 @@ namespace cryptonote
     binary_archive<false> ba(ss);
     bool r = tx.serialize_base(ba);
     CHECK_AND_ASSERT_MES(r, false, "Failed to parse transaction from blob");
+    CHECK_AND_ASSERT_MES(expand_transaction_1(tx, true), false, "Failed to expand transaction data");
     tx.invalidate_hashes();
     return true;
   }
@@ -159,17 +235,25 @@ namespace cryptonote
     return true;
   }
   //---------------------------------------------------------------
-  bool parse_and_validate_tx_from_blob(const blobdata& tx_blob, transaction& tx, crypto::hash& tx_hash, crypto::hash& tx_prefix_hash)
+  bool parse_and_validate_tx_from_blob(const blobdata& tx_blob, transaction& tx, crypto::hash& tx_hash)
   {
     std::stringstream ss;
     ss << tx_blob;
     binary_archive<false> ba(ss);
     bool r = ::serialization::serialize(ba, tx);
     CHECK_AND_ASSERT_MES(r, false, "Failed to parse transaction from blob");
+    CHECK_AND_ASSERT_MES(expand_transaction_1(tx, false), false, "Failed to expand transaction data");
     tx.invalidate_hashes();
     //TODO: validate tx
 
     get_transaction_hash(tx, tx_hash);
+    return true;
+  }
+  //---------------------------------------------------------------
+  bool parse_and_validate_tx_from_blob(const blobdata& tx_blob, transaction& tx, crypto::hash& tx_hash, crypto::hash& tx_prefix_hash)
+  {
+    if (!parse_and_validate_tx_from_blob(tx_blob, tx, tx_hash))
+      return false;
     get_transaction_prefix_hash(tx, tx_prefix_hash);
     return true;
   }
@@ -754,6 +838,11 @@ namespace cryptonote
     return true;
   }
   //---------------------------------------------------------------
+  void get_blob_hash(const epee::span<const char>& blob, crypto::hash& res)
+  {
+    cn_fast_hash(blob.data(), blob.size(), res);
+  }
+  //---------------------------------------------------------------
   void get_blob_hash(const blobdata& blob, crypto::hash& res)
   {
     cn_fast_hash(blob.data(), blob.size(), res);
@@ -818,6 +907,13 @@ namespace cryptonote
     return h;
   }
   //---------------------------------------------------------------
+  crypto::hash get_blob_hash(const epee::span<const char>& blob)
+  {
+    crypto::hash h = null_hash;
+    get_blob_hash(blob, h);
+    return h;
+  }
+  //---------------------------------------------------------------
   crypto::hash get_transaction_hash(const transaction& t)
   {
     crypto::hash h = null_hash;
@@ -847,7 +943,7 @@ namespace cryptonote
       const size_t inputs = t.vin.size();
       const size_t outputs = t.vout.size();
       bool r = tt.rct_signatures.serialize_rctsig_base(ba, inputs, outputs);
-      CHECK_AND_ASSERT_MES(r, false, "Failed to serialize rct signatures base");
+      CHECK_AND_ASSERT_THROW_MES(r, "Failed to serialize rct signatures base");
       cryptonote::get_blob_hash(ss.str(), hashes[1]);
     }
 
@@ -959,132 +1055,6 @@ namespace cryptonote
     return p;
   }
   //---------------------------------------------------------------
-
-  uint64_t cached_height = 0;
-  uint8_t* cn_bytes = NULL;
-  random_values *r = NULL;
-  critical_section m_v2_lock;
-
-  bool v2_initialized = false;
-  
-  void generate_v2_data(uint64_t ht, uint32_t sp_size, const cryptonote::Blockchain* bc)
-  {
-    if (!v2_initialized)
-    {
-      cn_bytes = (uint8_t*)malloc(128);
-      r = (random_values *)malloc(sizeof(random_values));
-      v2_initialized = true;
-    }
-
-    crypto::hash h0 = bc->get_block_id_by_height(ht);
-
-    uint8_t b1 = (uint8_t)(h0.data[0] ^ h0.data[16]);
-    uint8_t b2 = (uint8_t)(h0.data[4] ^ h0.data[20]);
-    uint8_t b3 = (uint8_t)(h0.data[8] ^ h0.data[24]);
-    uint8_t b4 = (uint8_t)(h0.data[12] ^ h0.data[28]);
-
-    crypto::hash h1 = bc->get_block_id_by_height(ht - b1);
-    crypto::hash h2 = bc->get_block_id_by_height(ht - b2);
-    crypto::hash h3 = bc->get_block_id_by_height(ht - b3);
-    crypto::hash h4 = bc->get_block_id_by_height(ht - b4);
-
-    int j = 0;
-    for (int i = 0; i < 128; i += 16)
-    {
-      std::memcpy(cn_bytes + i, h1.data + j, 4);
-      std::memcpy(cn_bytes + i + 4, h2.data + j, 4);
-      std::memcpy(cn_bytes + i + 8, h3.data + j, 4);
-      std::memcpy(cn_bytes + i + 12, h4.data + j, 4);
-      j += 4;
-    }
-
-    j = 0;
-    for (int i = 0; i < 128; i += 8)
-    {
-      r->operators[j] = (cn_bytes[i + 1] ^ cn_bytes[i + 3]) >> 5;
-      r->values[j] = cn_bytes[i + 5] ^ cn_bytes[i + 7];
-
-      r->indices[j++] = (
-        cn_bytes[i] << 24 | 
-        cn_bytes[i + 2] << 16 | 
-        cn_bytes[i + 4] << 8 | 
-        cn_bytes[i + 6]) % sp_size; 
-
-      r->operators[j] = (cn_bytes[i] ^ cn_bytes[i + 2]) >> 5;
-      r->values[j] = cn_bytes[i + 4] ^ cn_bytes[i + 6];
-              
-      r->indices[j++] = (
-        cn_bytes[i + 1] << 24 | 
-        cn_bytes[i + 3] << 16 | 
-        cn_bytes[i + 5] << 8 | 
-        cn_bytes[i + 7]) % sp_size;
-    }
-  }
-
-  #define CN_SOFT_SHELL_WINDOW              128
-  #define CN_SOFT_SHELL_ITER_MULTIPLIER     1
-  static uint32_t iters = 0;
-
-  bool get_block_longhash_v1(const block& b, crypto::hash& res, uint64_t height, const cryptonote::Blockchain* bc)
-  {
-    // Guard against chain splits by only taking data from blocks with at least
-    // 256 ancestors.
-    assert(height > 257);
-    uint64_t stable_height = height - 256;
-
-    if (height != cached_height || !v2_initialized)
-    {
-      CRITICAL_REGION_BEGIN(m_v2_lock);
-        cached_height = height;
-        generate_v2_data(stable_height, 1048576, bc);
-        uint32_t base_offset = (height % CN_SOFT_SHELL_WINDOW);
-        int32_t offset = (height % (CN_SOFT_SHELL_WINDOW * 2)) - (base_offset * 2);
-        iters = ((uint32_t)(abs(offset)) * CN_SOFT_SHELL_ITER_MULTIPLIER);
-      CRITICAL_REGION_END();
-    }
-
-    // Make the hashing context unique per nonce by seeding it with a hash
-    // of the hashing blob for a given nonce.
-    blobdata bd = get_block_hashing_blob(b);
-    crypto::hash h;
-    get_blob_hash(bd, h);
-
-    HC128_State rng_state;
-    HC128_Init(&rng_state, (unsigned char*)h.data, (unsigned char*)h.data+16);
-
-    char *salt = crypto::get_salt();
-    bc->get_db().get_salt(&rng_state, stable_height, salt);
-
-    HC128_NextKeys(&rng_state);
-    size_t rng_key_idx = 0;
-    // xx: [4, 8]
-    const uint32_t xx = (uint32_t)4U + HC128_U32(&rng_state, &rng_key_idx, 5U);
-    // yy: [4, 8]
-    const uint32_t yy = (uint32_t)4U + HC128_U32(&rng_state, &rng_key_idx, 5U);
-    // init_size_blk: 2, 4, or 8  (2 << [0, 2])
-    const uint8_t init_size_blk = (uint8_t)2U << ((uint8_t)HC128_U32(&rng_state, &rng_key_idx, 3U));
-
-    crypto::cn_slow_hash_v1(bd.data(), bd.size(), res, iters, r, salt, init_size_blk, xx, yy);
-
-    return true;
-  }
-
-  bool get_block_longhash(const block& b, crypto::hash& res, uint64_t height, const cryptonote::Blockchain* bc)
-  {
-    switch (b.major_version)
-    {
-      case 2:
-        return get_block_longhash_v1(b, res, height, bc);
-      default:
-      {
-        blobdata bd = get_block_hashing_blob(b);
-        crypto::cn_slow_hash(bd.data(), bd.size(), res);
-        return true;
-      }
-    }
-  }
-  
-  //---------------------------------------------------------------
   std::vector<uint64_t> relative_output_offsets_to_absolute(const std::vector<uint64_t>& off)
   {
     std::vector<uint64_t> res = off;
@@ -1103,13 +1073,6 @@ namespace cryptonote
       res[i] -= res[i-1];
 
     return res;
-  }
-  //---------------------------------------------------------------
-  crypto::hash get_block_longhash(const block& b, uint64_t height, const cryptonote::Blockchain* bc)
-  {
-    crypto::hash p = null_hash;
-    get_block_longhash(b, p, height, bc);
-    return p;
   }
   //---------------------------------------------------------------
   bool parse_and_validate_block_from_blob(const blobdata& b_blob, block& b, crypto::hash *block_hash)
@@ -1203,7 +1166,9 @@ namespace cryptonote
   crypto::secret_key encrypt_key(crypto::secret_key key, const epee::wipeable_string &passphrase)
   {
     crypto::hash hash;
-    crypto::cn_slow_hash(passphrase.data(), passphrase.size(), hash);
+    crypto::cn_hash_context_t *context = crypto::cn_hash_context_create();
+    crypto::cn_slow_hash(context, passphrase.data(), passphrase.size(), hash);
+    crypto::cn_hash_context_free(context);
     sc_add((unsigned char*)key.data, (const unsigned char*)key.data, (const unsigned char*)hash.data);
     return key;
   }
@@ -1211,7 +1176,9 @@ namespace cryptonote
   crypto::secret_key decrypt_key(crypto::secret_key key, const epee::wipeable_string &passphrase)
   {
     crypto::hash hash;
-    crypto::cn_slow_hash(passphrase.data(), passphrase.size(), hash);
+    crypto::cn_hash_context_t *context = crypto::cn_hash_context_create();
+    crypto::cn_slow_hash(context, passphrase.data(), passphrase.size(), hash);
+    crypto::cn_hash_context_free(context);
     sc_sub((unsigned char*)key.data, (const unsigned char*)key.data, (const unsigned char*)hash.data);
     return key;
   }

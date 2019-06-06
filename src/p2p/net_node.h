@@ -1,3 +1,4 @@
+// Copyright (c) 2018-2019, The NERVA Project
 // Copyright (c) 2014-2019, The Monero Project
 //
 // All rights reserved.
@@ -350,7 +351,7 @@ namespace nodetool
     void cache_connect_fail_info(const epee::net_utils::network_address& addr);
     bool is_addr_recently_failed(const epee::net_utils::network_address& addr);
     bool is_priority_node(const epee::net_utils::network_address& na);
-    std::set<std::string> get_seed_nodes(cryptonote::network_type nettype) const;
+    std::vector<std::string> get_seed_nodes(cryptonote::network_type nettype) const;
     bool connect_to_seed();
 
     template <class Container>

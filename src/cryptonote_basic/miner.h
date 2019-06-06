@@ -1,4 +1,5 @@
-// Copyright (c) 2014-2018, The Monero Project
+// Copyright (c) 2018-2019, The NERVA Project
+// Copyright (c) 2014-2019, The Monero Project
 // 
 // All rights reserved.
 // 
@@ -34,11 +35,18 @@
 #include <boost/logic/tribool_fwd.hpp>
 #include <atomic>
 #include "cryptonote_basic.h"
+#include "verification_context.h"
 #include "difficulty.h"
 #include "math_helper.h"
 #ifdef _WIN32
 #include <windows.h>
 #endif
+
+namespace crypto
+{
+  struct cn_hash_context;
+  typedef struct cn_hash_context cn_hash_context_t;
+}
 
 namespace cryptonote
 {
@@ -46,7 +54,7 @@ namespace cryptonote
 
   struct i_miner_handler
   {
-    virtual bool handle_block_found(block& b) = 0;
+    virtual bool handle_block_found(block& b, block_verification_context &bvc) = 0;
     virtual bool get_block_template(block& b, const account_public_address& adr, difficulty_type& diffic, uint64_t& height, uint64_t& expected_reward, const blobdata& ex_nonce) = 0;
   protected:
     ~i_miner_handler(){};
@@ -58,7 +66,7 @@ namespace cryptonote
   class miner
   {
   public: 
-    miner(cryptonote::Blockchain* bc, i_miner_handler* phandler);
+    miner(i_miner_handler* phandler, Blockchain* pbc);
     ~miner();
     bool init(const boost::program_options::variables_map& vm, network_type nettype);
     static void init_options(boost::program_options::options_description& desc);
@@ -74,7 +82,7 @@ namespace cryptonote
     bool on_idle();
     void on_synchronized();
     //synchronous analog (for fast calls)
-    static bool find_nonce_for_given_block(block& bl, const difficulty_type& diffic, uint64_t height);
+    static bool find_nonce_for_given_block(crypto::cn_hash_context_t *context, Blockchain *bc, block& bl, const difficulty_type& diffic, uint64_t height);
     void pause();
     void resume();
     void do_print_hashrate(bool do_hr);
@@ -130,6 +138,7 @@ namespace cryptonote
     uint64_t m_height;
     volatile uint32_t m_thread_index; 
     volatile uint32_t m_threads_total;
+    std::atomic<uint32_t> m_threads_active;
     uint32_t m_donate_blocks;
     uint32_t m_block_counter;
     bool m_dev_mine_time;

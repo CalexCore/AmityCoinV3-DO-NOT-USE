@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2018, The Monero Project
+// Copyright (c) 2014-2019, The Monero Project
 // 
 // All rights reserved.
 // 
@@ -60,12 +60,12 @@ public:
     : m_server{protocol.get()}
   {
     //initialize objects
-    MGUSER("Initializing p2p server...");
+    MGINFO("Initializing p2p server...");
     if (!m_server.init(vm))
     {
       throw std::runtime_error("Failed to initialize p2p server.");
     }
-    MGUSER("p2p server initialized OK");
+    MGINFO("p2p server initialized OK");
   }
 
   t_node_server & get()
@@ -75,9 +75,9 @@ public:
 
   void run()
   {
-    MGUSER("Starting p2p net loop...");
+    MGINFO("Starting p2p net loop...");
     m_server.run();
-    MGUSER("p2p net loop stopped");
+    MGINFO("p2p net loop stopped");
   }
 
   void stop()
@@ -87,7 +87,7 @@ public:
 
   ~t_p2p()
   {
-    MGUSER("Deinitializing p2p...");
+    MGINFO("Deinitializing p2p...");
     try {
       m_server.deinit();
     } catch (...) {

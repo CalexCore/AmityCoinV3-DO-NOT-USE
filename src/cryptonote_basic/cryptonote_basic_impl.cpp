@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2018, The Masari Project
+// Copyright (c) 2018-2019, The Amity Project
 // Copyright (c) 2014-2019, The Monero Project
 //
 // All rights reserved.
@@ -96,8 +96,7 @@ namespace cryptonote {
       return true;
     }
 
-    if (version >= 0)
-        reward = BLOCK_REWARD;
+    reward = BLOCK_REWARD;
 
     return true;
   }

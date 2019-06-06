@@ -38,8 +38,10 @@ using namespace epee;
 #include "common/apply_permutation.h"
 #include "cryptonote_tx_utils.h"
 #include "cryptonote_config.h"
+#include "blockchain_db/blockchain_db.h"
 #include "cryptonote_basic/miner.h"
 #include "cryptonote_basic/tx_extra.h"
+#include "cryptonote_core/blockchain.h"
 #include "crypto/crypto.h"
 #include "crypto/hash.h"
 #include "ringct/rctSigs.h"
@@ -81,13 +83,17 @@ namespace cryptonote
     tx.vout.clear();
     tx.extra.clear();
 
-    hw::device &hwdev = hw::get_device("default");
-    keypair txkey = keypair::generate(hwdev);
+    keypair txkey = keypair::generate(hw::get_device("default"));
+    add_tx_pub_key_to_extra(tx, txkey.pub);
+    if(!extra_nonce.empty())
+      if(!add_extra_nonce_to_tx_extra(tx.extra, extra_nonce))
+        return false;
+    if (!sort_tx_extra(tx.extra, tx.extra))
+      return false;
     
     txin_gen in;
     in.height = height;
 
-    uint64_t block_reward = 0;
     uint64_t base_reward;
     if(!get_block_reward(median_size, already_generated_coins, base_reward, hard_fork_version))
     {
@@ -95,28 +101,20 @@ namespace cryptonote
       return false;
     }
 
-    size_t miner_index = 0;
-
-    add_tx_pub_key_to_extra(tx, txkey.pub);
-    if(!extra_nonce.empty())
-      if(!add_extra_nonce_to_tx_extra(tx.extra, extra_nonce))
-        return false;
-    if (!sort_tx_extra(tx.extra, tx.extra))
-      return false;
 
 #if defined(DEBUG_CREATE_BLOCK_TEMPLATE)
     LOG_PRINT_L1("Creating block template: reward " << base_reward <<
       ", fee " << fee);
 #endif
 
-    block_reward += base_reward;
-    block_reward += fee;
+    uint64_t block_reward = base_reward + fee;
 
     crypto::key_derivation derivation = AUTO_VAL_INIT(derivation);
     crypto::public_key out_eph_public_key = AUTO_VAL_INIT(out_eph_public_key);
     bool r = crypto::generate_key_derivation(miner_address.m_view_public_key, txkey.sec, derivation);
     CHECK_AND_ASSERT_MES(r, false, "while creating outs: failed to generate_key_derivation(" << miner_address.m_view_public_key << ", " << txkey.sec << ")");
 
+    size_t miner_index = 0;
     r = crypto::derive_public_key(derivation, miner_index, miner_address.m_spend_public_key, out_eph_public_key);
     CHECK_AND_ASSERT_MES(r, false, "while creating outs: failed to derive_public_key(" << derivation << ", " << miner_address.m_spend_public_key << ")");
 
@@ -141,7 +139,7 @@ namespace cryptonote
     return true;
   }
   //---------------------------------------------------------------
-  bool construct_genesis_tx(transaction& tx) {
+  bool construct_genesis_tx(transaction& tx, uint64_t amount) {
     tx.vin.clear();
     tx.vout.clear();
     tx.extra.clear();
@@ -170,7 +168,7 @@ namespace cryptonote
     tk.key = out_eph_public_key;
 
     tx_out out;
-    out.amount = GENESIS_BLOCK_REWARD;
+    out.amount = amount;
     out.target = tk;
     tx.vout.push_back(out);
 
@@ -626,9 +624,67 @@ namespace cryptonote
     bl.minor_version = CURRENT_BLOCK_MINOR_VERSION;
     bl.timestamp = 0;
     bl.nonce = config::GENESIS_NONCE;
-    miner::find_nonce_for_given_block(bl, 1, 0);
+    crypto::cn_hash_context_t *hash_context = crypto::cn_hash_context_create();
+    miner::find_nonce_for_given_block(hash_context, NULL, bl, 1, 0);
+    crypto::cn_hash_context_free(hash_context);
     bl.invalidate_hashes();
     return true;
   }
   //---------------------------------------------------------------
+  bool get_block_longhash(crypto::cn_hash_context_t *context, Blockchain *bc, const block& b, crypto::hash& res, const uint64_t height)
+  {
+    switch (b.major_version)
+    {
+      case 2:
+        return get_block_longhash_v1(context, bc, b, res, height);
+      default:
+      {
+        blobdata bd = get_block_hashing_blob(b);
+        crypto::cn_slow_hash(context, bd.data(), bd.size(), res);
+        return true;
+      }
+    }
+  }
+  //---------------------------------------------------------------
+  bool get_block_longhash_v1(crypto::cn_hash_context_t *context, Blockchain *bc, const block& b, crypto::hash& res, uint64_t height)
+  {
+    // Guard against chain splits by only taking data from blocks with at least
+    // 256 ancestors.
+    assert(height > 257);
+    uint64_t stable_height = height - 256;
+    BlockchainDB& db = bc->get_db();
+
+    if (context->cached_height != height)
+    {
+      db.get_cna_v2_data(&context->random_values, stable_height, CN_SCRATCHPAD_MEMORY);
+      uint32_t base_offset = (height % CN_SOFT_SHELL_WINDOW);
+      int32_t offset = (height % (CN_SOFT_SHELL_WINDOW * 2)) - (base_offset * 2);
+      iters = ((uint32_t)(abs(offset)) * CN_SOFT_SHELL_ITER_MULTIPLIER);
+      context->cached_height = height;
+    }
+
+    // Make the hashing context unique per nonce by seeding it with a hash
+    // of the hashing blob for a given nonce.
+    blobdata bd = get_block_hashing_blob(b);
+    crypto::hash h;
+    get_blob_hash(bd, h);
+
+    HC128_State rng_state;
+    HC128_Init(&rng_state, (unsigned char*)h.data, (unsigned char*)h.data+16);
+
+    db.get_cna_v5_data(context->salt, &rng_state, stable_height);
+
+    HC128_NextKeys(&rng_state);
+    size_t rng_key_idx = 0;
+    // xx: [4, 8]
+    const uint32_t xx = (uint32_t)4U + HC128_U32(&rng_state, &rng_key_idx, 5U);
+    // yy: [4, 8]
+    const uint32_t yy = (uint32_t)4U + HC128_U32(&rng_state, &rng_key_idx, 5U);
+    // init_size_blk: 2, 4, or 8  (2 << [0, 2])
+    const uint8_t init_size_blk = (uint8_t)2U << ((uint8_t)HC128_U32(&rng_state, &rng_key_idx, 3U));
+
+    crypto::cn_slow_hash_v1(context, bd.data(), bd.size(), res, iters, init_size_blk, xx, yy);
+
+    return true;
+  }
 }
