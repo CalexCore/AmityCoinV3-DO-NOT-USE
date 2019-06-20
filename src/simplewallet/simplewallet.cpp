@@ -90,7 +90,7 @@ typedef cryptonote::simple_wallet sw;
 #define MONERO_DEFAULT_LOG_CATEGORY "wallet.simplewallet"
 #define EXTENDED_LOGS_FILE "wallet_details.log"
 
-#define DEFAULT_MIX 10
+#define DEFAULT_MIX 4
 
 #define OUTPUT_EXPORT_FILE_MAGIC "Amity output export\003"
 
