@@ -206,7 +206,6 @@ namespace cryptonote
               m_mempool(m_blockchain_storage),
               m_blockchain_storage(m_mempool),
               m_miner(this, &m_blockchain_storage),
-              m_miner_address(boost::value_initialized<account_public_address>()),
               m_starter_message_showed(false),
               m_target_blockchain_height(0),
               m_checkpoints_path(""),
@@ -215,7 +214,7 @@ namespace cryptonote
               m_disable_dns_checkpoints(false),
               m_nettype(UNDEFINED),
               m_update_available(false),
-			  m_pad_transactions(false)
+              m_pad_transactions(false)
   {
     m_checkpoints_updating.clear();
     set_cryptonote_protocol(pprotocol);
