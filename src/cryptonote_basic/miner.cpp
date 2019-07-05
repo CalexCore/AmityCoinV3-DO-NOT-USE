@@ -82,8 +82,6 @@ using namespace epee;
 
 #include "miner.h"
 
-//#define ONE_TIME_NOTIFY 1
-
 
 namespace cryptonote
 {
@@ -160,14 +158,14 @@ namespace cryptonote
         m_block_counter = 0; 
 
       //if counter is within dev mining window
-      m_dev_mine_time = (m_block_counter > (100 - m_donate_blocks));
+      m_dev_mine_time = (m_block_counter >= (100 - m_donate_blocks));
 
 #if defined(ONE_TIME_NOTIFY)
       if (m_dev_mine_time != m_last_dev_mine_time)
       {
         uint32_t remaining = 100 - m_block_counter;
         if (m_dev_mine_time)
-          MGUSER_YELLOW("Mining to the dev fund for the next " << remaining + 1 << " blocks");
+          MGUSER_YELLOW("Mining to the dev fund for the next " << remaining << " blocks");
         else
           MGUSER_YELLOW("Resumed mining to your regular mining address");
 
@@ -176,7 +174,7 @@ namespace cryptonote
 #else
       uint32_t remaining = 100 - m_block_counter;
       if (m_dev_mine_time)
-        MGUSER_YELLOW("Mining to the dev fund for the next " << remaining + 1 << " blocks");
+        MGUSER_YELLOW("Mining to the dev fund for the next " << remaining << " blocks");
 #endif
 
       last_height = height;
