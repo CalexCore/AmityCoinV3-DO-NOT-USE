@@ -206,7 +206,6 @@ namespace cryptonote
               m_mempool(m_blockchain_storage),
               m_blockchain_storage(m_mempool),
               m_miner(this, &m_blockchain_storage),
-              m_miner_address(boost::value_initialized<account_public_address>()),
               m_starter_message_showed(false),
               m_target_blockchain_height(0),
               m_checkpoints_path(""),
@@ -215,7 +214,7 @@ namespace cryptonote
               m_disable_dns_checkpoints(false),
               m_nettype(UNDEFINED),
               m_update_available(false),
-			  m_pad_transactions(false)
+              m_pad_transactions(false)
   {
     m_checkpoints_updating.clear();
     set_cryptonote_protocol(pprotocol);
@@ -439,6 +438,7 @@ namespace cryptonote
       m_nettype = FAKECHAIN;
     }
     bool r = handle_command_line(vm);
+    CHECK_AND_ASSERT_MES(r, false, "Failed to handle command line");
 
     std::string db_sync_mode = command_line::get_arg(vm, cryptonote::arg_db_sync_mode);
     bool db_salvage = command_line::get_arg(vm, cryptonote::arg_db_salvage) != 0;
@@ -480,7 +480,7 @@ namespace cryptonote
     }
 
     folder /= db->get_db_name();
-    MGINFO("Loading blockchain from folder " << folder.string() << " ...");
+    MGUSER("Loading blockchain from folder " << folder.string() << " ...");
 
     const std::string filename = folder.string();
     // default to fast:async:1
@@ -622,6 +622,7 @@ namespace cryptonote
     const cryptonote::test_options regtest_test_options = {regtest_hard_forks};
     const difficulty_type fixed_difficulty = command_line::get_arg(vm, arg_fixed_difficulty);
     r = m_blockchain_storage.init(db.release(), m_nettype, m_offline, regtest ? &regtest_test_options : test_options, fixed_difficulty, get_checkpoints);
+    CHECK_AND_ASSERT_MES(r, false, "Failed to initialize blockchain storage");
 
     r = m_mempool.init(max_txpool_size);
     CHECK_AND_ASSERT_MES(r, false, "Failed to initialize memory pool");

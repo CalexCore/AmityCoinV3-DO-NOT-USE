@@ -1019,16 +1019,13 @@ namespace cryptonote
       return true;
     }
 
-    boost::thread::attributes attrs;
-    attrs.set_stack_size(THREAD_STACK_SIZE);
-
     cryptonote::miner &miner= m_core.get_miner();
     if (miner.is_mining())
     {
       res.status = "Already mining";
       return true;
     }
-    if(!miner.start(info.address, static_cast<size_t>(req.threads_count), attrs, req.do_background_mining, req.ignore_battery))
+    if(!miner.start(info.address, static_cast<size_t>(req.threads_count), req.do_background_mining, req.ignore_battery))
     {
       res.status = "Failed, mining not started";
       LOG_PRINT_L0(res.status);
@@ -1041,8 +1038,15 @@ namespace cryptonote
   bool core_rpc_server::on_set_donation_level(const COMMAND_RPC_DONATE_MINING::request& req, COMMAND_RPC_DONATE_MINING::response& res, const connection_context *ctx)
   {
     PERF_TIMER(on_set_donation_level);
-    cryptonote::miner &miner= m_core.get_miner();
-    miner.set_donate_blocks(req.blocks);
+    cryptonote::miner &miner = m_core.get_miner();
+    if(!miner.set_donate_percent(req.blocks))
+    {
+      res.status = "Invalid donation level";
+      res.blocks = miner.get_donate_percent();
+      LOG_PRINT_L0(res.status);
+      return true;
+    }
+    res.blocks = miner.get_donate_percent();
     res.status = CORE_RPC_STATUS_OK;
     return true;
   }
@@ -1588,7 +1592,7 @@ namespace cryptonote
       ok = ok && getheight_res.status == CORE_RPC_STATUS_OK;
 
       m_should_use_bootstrap_daemon = ok && top_height + 10 < getheight_res.height;
-      MINFO((m_should_use_bootstrap_daemon ? "Using" : "Not using") << " the bootstrap daemon (our height: " << top_height << ", bootstrap daemon's height: " << getheight_res.height << ")");
+      MINFO((m_should_use_bootstrap_daemon ? "Using" : "Not using") << " the bootstrap daemon (our height: " << top_height << ", bootstrap daemon's height: " << (ok ? getheight_res.height : 0) << ")");
     }
     if (!m_should_use_bootstrap_daemon)
       return false;

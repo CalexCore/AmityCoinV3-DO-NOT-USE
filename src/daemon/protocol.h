@@ -50,12 +50,12 @@ public:
     )
     : m_protocol{core.get(), nullptr, offline}
   {
-    MGINFO("Initializing cryptonote protocol...");
+    MGUSER("Initializing cryptonote protocol...");
     if (!m_protocol.init(vm))
     {
       throw std::runtime_error("Failed to initialize cryptonote protocol.");
     }
-    MGINFO("Cryptonote protocol initialized OK");
+    MGUSER("Cryptonote protocol initialized OK");
   }
 
   t_protocol_raw & get()

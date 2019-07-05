@@ -573,9 +573,9 @@ namespace wallet_rpc
 
     struct transfer_description
     {
-      uint32_t ring_size;
       uint64_t amount_in;
       uint64_t amount_out;
+      uint32_t ring_size;
       uint64_t unlock_time;
       std::list<recipient> recipients;
       std::string payment_id;

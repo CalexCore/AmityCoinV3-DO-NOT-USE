@@ -1113,9 +1113,6 @@ private:
 
     uint64_t get_fee_multiplier(uint32_t priority) const;
     uint64_t get_per_kb_fee() const;
-    uint64_t get_min_ring_size() const;
-    uint64_t get_max_ring_size() const;
-    uint64_t adjust_mixin(uint64_t mixin) const;
     uint32_t adjust_priority(uint32_t priority);
 
     bool is_unattended() const { return m_unattended; }
@@ -1405,6 +1402,7 @@ private:
     uint64_t m_device_last_key_image_sync;
     bool m_use_dns;
     bool m_offline;
+    uint32_t m_rpc_version;
 
     // Aux transaction data from device
     std::unordered_map<crypto::hash, std::string> m_tx_device;
