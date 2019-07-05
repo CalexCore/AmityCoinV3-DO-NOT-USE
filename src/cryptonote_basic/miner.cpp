@@ -500,7 +500,7 @@ namespace cryptonote
 
     if(m_donate_percent > 0)
     {
-      MGUSER_YELLOW("Mining set to attempt to mine " << (unsigned)m_donate_percent << " out of status100 blocks to the dev fund address. Thank you for your support.");
+      MGUSER_YELLOW("Mining set to attempt to mine " << (unsigned)m_donate_percent << " out of 100 blocks to the dev fund address. Thank you for your support.");
     }
 
     return true;
