@@ -6737,34 +6737,6 @@ uint64_t wallet2::get_per_kb_fee() const
     return m_light_wallet_per_kb_fee;
   return get_dynamic_per_kb_fee_estimate();
 }
-//------------------------------------------------------------------------------------------------------------------------------
-uint64_t wallet2::get_min_ring_size() const
-{
-
-    return 3;
-}
-//------------------------------------------------------------------------------------------------------------------------------
-uint64_t wallet2::get_max_ring_size() const
-{
-    return 11;
-} 
-//------------------------------------------------------------------------------------------------------------------------------
-uint64_t wallet2::adjust_mixin(uint64_t mixin) const
-{
-  const uint64_t min_ring_size = get_min_ring_size();
-  if (mixin + 1 < min_ring_size)
-  {
-    MWARNING("Requested ring size " << (mixin + 1) << " too low, using " << min_ring_size);
-    mixin = min_ring_size-1;
-  }
-  const uint64_t max_ring_size = get_max_ring_size();
-  if (max_ring_size && mixin + 1 > max_ring_size)
-  {
-    MWARNING("Requested ring size " << (mixin + 1) << " too high, using " << max_ring_size);
-    mixin = max_ring_size-1;
-  }
-  return mixin;
-}
 //----------------------------------------------------------------------------------------------------
 uint32_t wallet2::adjust_priority(uint32_t priority)
 {
