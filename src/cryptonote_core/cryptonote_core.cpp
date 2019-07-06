@@ -162,7 +162,7 @@ namespace cryptonote
   };
   static const command_line::arg_descriptor<std::string> arg_check_updates = {
     "check-updates"
-  , "Check for new versions of amity: [disabled|notify]"
+  , "Check for new versions of amity: [disabled|notify|download|update]"
   , "notify"
   };
   static const command_line::arg_descriptor<size_t> arg_max_txpool_size  = {
@@ -480,7 +480,7 @@ namespace cryptonote
     }
 
     folder /= db->get_db_name();
-    MGINFO("Loading blockchain from folder " << folder.string() << " ...");
+    MGUSER("Loading blockchain from folder " << folder.string() << " ...");
 
     const std::string filename = folder.string();
     // default to fast:async:1
