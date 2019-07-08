@@ -7421,10 +7421,7 @@ void wallet2::get_outs(std::vector<std::vector<tools::wallet2::get_outs_entry>> 
           pre_fork_outputs_count << " pre-fork, " << post_fork_outputs_count << " post-fork, " <<
           (requested_outputs_count - recent_outputs_count - pre_fork_outputs_count - post_fork_outputs_count) << " full-chain");
 
-      uint64_t num_found = 0;
-
-      // if we have a known ring, use it
-      
+      uint64_t num_found = 0;      
 
       if (num_outs <= requested_outputs_count)
       {
