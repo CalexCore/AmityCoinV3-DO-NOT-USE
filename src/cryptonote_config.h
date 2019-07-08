@@ -65,6 +65,8 @@
 #define CRYPTONOTE_BLOCK_GRANTED_FULL_REWARD_ZONE       300000
 #define CRYPTONOTE_COINBASE_BLOB_RESERVED_SIZE          600
 #define CRYPTONOTE_DISPLAY_DECIMAL_POINT                6
+// COIN - number of smallest units in one coin
+#define COIN                                            ((uint64_t)1000000) // pow(10, 6)
 
 #define DEFAULT_MIXIN                                   4
 #define DEFAULT_RINGSIZE                                DEFAULT_MIXIN + 1
