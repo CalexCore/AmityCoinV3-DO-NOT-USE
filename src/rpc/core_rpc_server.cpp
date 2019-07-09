@@ -64,6 +64,8 @@ using namespace epee;
 #define MAX_RESTRICTED_FAKE_OUTS_COUNT 40
 #define MAX_RESTRICTED_GLOBAL_FAKE_OUTS_COUNT 5000
 
+#define OUTPUT_HISTOGRAM_RECENT_CUTOFF_RESTRICTION (3 * 86400) // 3 days max, the wallet requests 1.8 days
+
 namespace
 {
   void add_reason(std::string &reasons, const char *reason)
@@ -109,6 +111,7 @@ namespace cryptonote
   {
     m_restricted = restricted;
     m_net_server.set_threads_prefix("RPC");
+    m_net_server.set_connection_filter(&m_p2p);
 
     auto rpc_config = cryptonote::rpc_args::process(vm, true);
     if (!rpc_config)
@@ -154,6 +157,24 @@ namespace cryptonote
     if(!m_p2p.get_payload_object().is_synchronized())
     {
       return false;
+    }
+    return true;
+  }
+   //------------------------------------------------------------------------------------------------------------------------------
+  bool core_rpc_server::add_host_fail(const connection_context *ctx)
+  {
+    if(!ctx || !ctx->m_remote_address.is_blockable())
+      return false;
+
+    CRITICAL_REGION_LOCAL(m_host_fails_score_lock);
+    uint64_t fails = ++m_host_fails_score[ctx->m_remote_address.host_str()];
+    MDEBUG("Host " << ctx->m_remote_address.host_str() << " fail score=" << fails);
+    if(fails > RPC_IP_FAILS_BEFORE_BLOCK)
+    {
+      auto it = m_host_fails_score.find(ctx->m_remote_address.host_str());
+      CHECK_AND_ASSERT_MES(it != m_host_fails_score.end(), false, "internal error");
+      it->second = RPC_IP_FAILS_BEFORE_BLOCK/2;
+      m_p2p.block_host(ctx->m_remote_address);
     }
     return true;
   }
@@ -282,6 +303,7 @@ namespace cryptonote
     if(!m_core.find_blockchain_supplement(req.start_height, req.block_ids, bs, res.current_height, res.start_height, !req.no_miner_tx, COMMAND_RPC_GET_BLOCKS_FAST_MAX_COUNT))
     {
       res.status = "Failed";
+      add_host_fail(ctx);
       return false;
     }
 
@@ -405,6 +427,7 @@ namespace cryptonote
     if(!m_core.get_blockchain_storage().find_blockchain_supplement(req.block_ids, res.m_block_ids, res.start_height, res.current_height))
     {
       res.status = "Failed";
+      add_host_fail(ctx);
       return false;
     }
 
@@ -724,7 +747,7 @@ namespace cryptonote
     // try the pool for any missing txes
     size_t found_in_pool = 0;
     std::unordered_set<crypto::hash> pool_tx_hashes;
-    std::unordered_map<crypto::hash, bool> double_spend_seen;
+    std::unordered_map<crypto::hash, tx_info> per_tx_pool_tx_info;
     if (!missed_txs.empty())
     {
       std::vector<tx_info> pool_tx_info;
@@ -770,7 +793,7 @@ namespace cryptonote
             {
               if (ti.id_hash == hash_string)
               {
-                double_spend_seen.insert(std::make_pair(h, ti.double_spend_seen));
+                per_tx_pool_tx_info.insert(std::make_pair(h, ti));
                 break;
               }
             }
@@ -799,14 +822,17 @@ namespace cryptonote
       if (e.in_pool)
       {
         e.block_height = e.block_timestamp = std::numeric_limits<uint64_t>::max();
-        if (double_spend_seen.find(tx_hash) != double_spend_seen.end())
+        auto it = per_tx_pool_tx_info.find(tx_hash);
+        if (it != per_tx_pool_tx_info.end())
         {
-          e.double_spend_seen = double_spend_seen[tx_hash];
+          e.double_spend_seen = it->second.double_spend_seen;
+          e.relayed = it->second.relayed;
         }
         else
         {
-          MERROR("Failed to determine double spend status for " << tx_hash);
+          MERROR("Failed to determine pool info for " << tx_hash);
           e.double_spend_seen = false;
+          e.relayed - false;
         }
       }
       else
@@ -814,6 +840,7 @@ namespace cryptonote
         e.block_height = m_core.get_blockchain_storage().get_db().get_tx_block_height(tx_hash);
         e.block_timestamp = m_core.get_blockchain_storage().get_db().get_block_timestamp(e.block_height);
         e.double_spend_seen = false;
+        e.relayed = false;
       }
 
       // fill up old style responses too, in case an old wallet asks
@@ -2000,6 +2027,13 @@ namespace cryptonote
     if (use_bootstrap_daemon_if_necessary<COMMAND_RPC_GET_OUTPUT_HISTOGRAM>(invoke_http_mode::JON_RPC, "get_output_histogram", req, res, r))
       return r;
 
+       const bool restricted = m_restricted && ctx;
+    if (restricted && req.recent_cutoff > 0 && req.recent_cutoff < (uint64_t)time(NULL) - OUTPUT_HISTOGRAM_RECENT_CUTOFF_RESTRICTION)
+    {
+      res.status = "Recent cutoff is too old";
+      return true;
+    }
+
     std::map<uint64_t, std::tuple<uint64_t, uint64_t, uint64_t>> histogram;
     try
     {
@@ -2223,6 +2257,13 @@ namespace cryptonote
   bool core_rpc_server::on_update(const COMMAND_RPC_UPDATE::request& req, COMMAND_RPC_UPDATE::response& res, const connection_context *ctx)
   {
     PERF_TIMER(on_update);
+
+    if (m_core.offline())
+    {
+      res.status = "Daemon is running offline";
+      return true;
+    }
+
     static const char software[] = "amity-cli";
 #ifdef BUILD_TAG
     static const char buildtag[] = BOOST_PP_STRINGIZE(BUILD_TAG);
