@@ -667,7 +667,7 @@ namespace cryptonote
       {
         //we lucky!
         ++m_config.current_extra_message_index;
-        MGUSER_GREEN("Found block at height: " << height);
+        MGUSER_GREEN("BOOYA! Found some mitties at height: " << height);
         cryptonote::block_verification_context bvc;
         if(!m_phandler->handle_block_found(b, bvc) || !bvc.m_added_to_main_chain)
         {
