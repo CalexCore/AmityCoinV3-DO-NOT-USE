@@ -168,7 +168,9 @@ namespace cryptonote
 
     struct request_t
     {
-      std::vector<crypto::hash> blocks;
+      std::vector<crypto::hash>    txs;
+      std::vector<crypto::hash>    blocks;
+      
       BEGIN_KV_SERIALIZE_MAP()
         KV_SERIALIZE_CONTAINER_POD_AS_BLOB(blocks)
       END_KV_SERIALIZE_MAP()
