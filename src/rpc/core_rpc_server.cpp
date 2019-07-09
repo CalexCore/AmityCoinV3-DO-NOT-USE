@@ -2236,6 +2236,13 @@ namespace cryptonote
   bool core_rpc_server::on_update(const COMMAND_RPC_UPDATE::request& req, COMMAND_RPC_UPDATE::response& res, const connection_context *ctx)
   {
     PERF_TIMER(on_update);
+
+    if (m_core.offline())
+    {
+      res.status = "Daemon is running offline";
+      return true;
+    }
+    
     static const char software[] = "amity-cli";
 #ifdef BUILD_TAG
     static const char buildtag[] = BOOST_PP_STRINGIZE(BUILD_TAG);
