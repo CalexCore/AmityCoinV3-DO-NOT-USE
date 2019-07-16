@@ -36,6 +36,6 @@ Binaries will be found in `/builder/build/release/bin/`
 ##### Alternative Linux Build
 -`git clone --recursive https://github.com/CalexCore/AmityCoinV3.git`  
 -`cd AmityCoinV3`
-- `mkdir build && cd $_ && cmake -DCMAKE_BUILD_TYPE=release -DSTATIC=${STATIC} -DBUILD_TAG="linux_x64" .. && make`
+-`mkdir build && cd $_ && cmake -DCMAKE_BUILD_TYPE=release -DSTATIC=${STATIC} -DBUILD_TAG="linux_x64" .. && make`
 
-Binaries will be found in `/build/src/`
+Binaries will be found in `/build/bin/`
