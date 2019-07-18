@@ -1,3 +1,5 @@
+// Copyright (c) 2018-2019, The AmityCoin Project
+// Copyright (c) 2019, The Lithe Project Development Team
 // Copyright (c) 2018-2019, The NERVA Project
 // Copyright (c) 2017-2018, The Masari Project
 // Copyright (c) 2014-2019, The Monero Project
@@ -255,7 +257,7 @@ namespace
 #endif
     std::cout << prompt;
     if (yesno)
-      std::cout << "  (Y/Yes/N/No)";
+      std::cout << "  (Y)Yes - No(N)";
     std::cout << ": " << std::flush;
 
     std::string buf;
@@ -324,9 +326,18 @@ namespace
     return err;
   }
 
-  tools::scoped_message_writer success_msg_writer(bool color = false)
+  /* NOTE: These have been changed so we can now use
+  	"success_msg_writer" for green messages (succesful or generated)
+	"message_writer" for white messages (normal dialog)
+	"fail_msg_writer" for red messages (errors)
+	
+	We can now use "message_writer" with "console_color_<colour>" for
+	other kind of messages like yellow for warnings or blue for the Amity
+	welcome message */
+
+  tools::scoped_message_writer success_msg_writer()
   {
-    return tools::scoped_message_writer(color ? console_color_green : console_color_default, false, std::string(), el::Level::Info);
+    return tools::scoped_message_writer(console_color_green, false, std::string(), el::Level::Info);
   }
 
   tools::scoped_message_writer message_writer(epee::console_colors color = epee::console_color_default, bool bright = false)
@@ -1444,7 +1455,7 @@ bool simple_wallet::sign_multisig_main(const std::vector<std::string> &args, boo
     uint32_t threshold;
     m_wallet->multisig(NULL, &threshold);
     uint32_t signers_needed = threshold - signers - 1;
-    success_msg_writer(true) << tr("Transaction successfully signed to file ") << filename << ", "
+    success_msg_writer() << tr("Transaction successfully signed to file ") << filename << ", "
         << signers_needed << " more signer(s) needed";
     return true;
   }
@@ -1457,8 +1468,8 @@ bool simple_wallet::sign_multisig_main(const std::vector<std::string> &args, boo
         txids_as_text += (", ");
       txids_as_text += epee::string_tools::pod_to_hex(txid);
     }
-    success_msg_writer(true) << tr("Transaction successfully signed to file ") << filename << ", txid " << txids_as_text;
-    success_msg_writer(true) << tr("It may be relayed to the network with submit_multisig");
+    success_msg_writer() << tr("Transaction successfully signed to file ") << filename << ", txid " << txids_as_text;
+    success_msg_writer() << tr("It may be relayed to the network with submit_multisig");
   }
   return true;
 }
@@ -1532,7 +1543,7 @@ bool simple_wallet::submit_multisig_main(const std::vector<std::string> &args, b
     for (auto &ptx: txs.m_ptx)
     {
       m_wallet->commit_tx(ptx);
-      success_msg_writer(true) << tr("Transaction successfully submitted, transaction ") << get_transaction_hash(ptx.tx) << ENDL
+      success_msg_writer() << tr("Transaction successfully submitted, transaction ") << get_transaction_hash(ptx.tx) << ENDL
           << tr("You can check its status by using the `show_transfers` command.");
     }
   }
@@ -2102,7 +2113,7 @@ bool simple_wallet::welcome(const std::vector<std::string> &args)
 
 bool simple_wallet::version(const std::vector<std::string> &args)
 {
-  message_writer() << "Amity '" << MONERO_RELEASE_NAME << "' (v" << MONERO_VERSION_FULL << ")";
+  message_writer(console_color_blue, true) << "Amity '" << MONERO_RELEASE_NAME << "' (v" << MONERO_VERSION_FULL << ")";
   return true;
 }
 
@@ -2110,7 +2121,7 @@ bool simple_wallet::cold_sign_tx(const std::vector<tools::wallet2::pending_tx>& 
 {
   std::vector<std::string> tx_aux;
 
-  message_writer(console_color_white, false) << tr("Please confirm the transaction on the device");
+  message_writer(console_color_yellow, true) << tr("Please confirm the transaction on the device");
 
   m_wallet->cold_sign_tx(ptx_vector, exported_txs, dsts_info, tx_aux);
 
@@ -2587,17 +2598,17 @@ bool simple_wallet::help(const std::vector<std::string> &args/* = std::vector<st
 {
   if(args.empty())
   {
-    success_msg_writer() << get_commands_str();
+    message_writer() << get_commands_str();
   }
   else if ((args.size() == 2) && (args.front() == "mms"))
   {
     // Little hack to be able to do "help mms <subcommand>"
     std::vector<std::string> mms_args(1, args.front() + " " + args.back());
-    success_msg_writer() << get_command_usage(mms_args);
+    message_writer() << get_command_usage(mms_args);
   }
   else
   {
-    success_msg_writer() << get_command_usage(args);
+    message_writer() << get_command_usage(args);
   }
   return true;
 }
@@ -3284,7 +3295,7 @@ bool simple_wallet::ask_wallet_create_if_needed()
           bool ok = true;
           if (!m_restoring)
           {
-            message_writer() << tr("No wallet found with that name. Confirm creation of new wallet named: ") << wallet_path;
+            message_writer(console_color_yellow, true) << tr("No wallet found with that name. Confirm creation of new wallet named: ") << wallet_path;
             confirm_creation = input_line("", true);
             if(std::cin.eof())
             {
@@ -3313,7 +3324,7 @@ bool simple_wallet::ask_wallet_create_if_needed()
  */
 void simple_wallet::print_seed(const epee::wipeable_string &seed)
 {
-  success_msg_writer(true) << "\n" << boost::format(tr("NOTE: the following %s can be used to recover access to your wallet. "
+  message_writer(console_color_yellow, true) << "\n" << boost::format(tr("NOTE: the following %s can be used to recover access to your wallet. "
     "Write them down and store them somewhere safe and secure. Please do not store them in "
     "your email or on file storage services outside of your immediate control.\n")) % (m_wallet->multisig() ? tr("string") : tr("25 words"));
   // don't log
@@ -3963,7 +3974,7 @@ bool simple_wallet::init(const boost::program_options::variables_map& vm)
   check_background_mining(password);
 
   if (welcome)
-    message_writer(console_color_yellow, true) << tr("If you are new to Amity, type \"welcome\" for a brief overview.");
+    message_writer(console_color_blue, true) << tr("If you are new to Amity, type \"welcome\" for a brief overview.");
   
   if (m_long_payment_id_support)
   {
@@ -4147,7 +4158,7 @@ boost::optional<epee::wipeable_string> simple_wallet::new_wallet(const boost::pr
     if (was_deprecated_wallet)
     {
       // The user had used an older version of the wallet with old style mnemonics.
-      message_writer(console_color_green, false) << "\n" << tr("You had been using "
+      message_writer(console_color_yellow, true) << "\n" << tr("You had been using "
         "a deprecated version of the wallet. Please use the new seed that we provide.\n");
     }
     mnemonic_language = get_mnemonic_language();
@@ -4163,7 +4174,7 @@ boost::optional<epee::wipeable_string> simple_wallet::new_wallet(const boost::pr
   try
   {
     recovery_val = m_wallet->generate(m_wallet_file, std::move(rc.second).password(), recovery_key, recover, two_random, create_address_file);
-    message_writer(console_color_white, true) << tr("Generated new wallet: ")
+    success_msg_writer() << tr("Generated new wallet: ")
       << m_wallet->get_account().get_public_address_str(m_wallet->nettype());
     PAUSE_READLINE();
     std::cout << tr("View key: ");
@@ -4182,7 +4193,9 @@ boost::optional<epee::wipeable_string> simple_wallet::new_wallet(const boost::pr
   crypto::ElectrumWords::bytes_to_words(recovery_val, electrum_words, mnemonic_language);
 
   success_msg_writer() <<
-    "**********************************************************************\n" <<
+    "\n" <<
+    "**********************************************************************\n" << 
+    "\n" <<
     tr("Your wallet has been generated!\n"
     "To start synchronizing with the daemon, use the \"refresh\" command.\n"
     "Use the \"help\" command to see the list of available commands.\n"
@@ -4196,7 +4209,10 @@ boost::optional<epee::wipeable_string> simple_wallet::new_wallet(const boost::pr
   {
     print_seed(electrum_words);
   }
-  success_msg_writer() << "**********************************************************************";
+  success_msg_writer() << 
+    "\n" <<
+    "**********************************************************************\n" << 
+    "\n";
 
   return std::move(password);
 }
@@ -4235,7 +4251,7 @@ boost::optional<epee::wipeable_string> simple_wallet::new_wallet(const boost::pr
     {
       m_wallet->generate(m_wallet_file, std::move(rc.second).password(), address, viewkey, create_address_file);
     }
-    message_writer(console_color_white, true) << tr("Generated new wallet: ")
+    success_msg_writer() << tr("Generated new wallet: ")
       << m_wallet->get_account().get_public_address_str(m_wallet->nettype());
   }
   catch (const std::exception& e)
@@ -4277,7 +4293,7 @@ boost::optional<epee::wipeable_string> simple_wallet::new_wallet(const boost::pr
     bool create_address_file = command_line::get_arg(vm, arg_create_address_file);
     m_wallet->device_derivation_path(device_derivation_path);
     m_wallet->restore(m_wallet_file, std::move(rc.second).password(), device_desc.empty() ? "Ledger" : device_desc, create_address_file);
-    message_writer(console_color_white, true) << tr("Generated new wallet on hw device: ")
+    success_msg_writer() << tr("Generated new wallet on hw device: ")
       << m_wallet->get_account().get_public_address_str(m_wallet->nettype());
   }
   catch (const std::exception& e)
@@ -4397,7 +4413,7 @@ boost::optional<epee::wipeable_string> simple_wallet::open_wallet(const boost::p
       }
       if (is_deterministic)
       {
-        message_writer(console_color_green, false) << "\n" << tr("You had been using "
+        success_msg_writer() << "\n" << tr("You had been using "
           "a deprecated version of the wallet. Please proceed to upgrade your wallet.\n");
         std::string mnemonic_language = get_mnemonic_language();
         if (mnemonic_language.empty())
@@ -4412,7 +4428,7 @@ boost::optional<epee::wipeable_string> simple_wallet::open_wallet(const boost::p
       }
       else
       {
-        message_writer(console_color_green, false) << "\n" << tr("You had been using "
+        message_writer(console_color_yellow, true) << "\n" << tr("You had been using "
           "a deprecated version of the wallet. Your wallet file format is being upgraded now.\n");
         m_wallet->rewrite(m_wallet_file, password);
       }
@@ -4579,7 +4595,7 @@ void simple_wallet::stop_background_mining()
       return;
     }
   }
-  message_writer(console_color_red, false) << tr("Background mining not enabled. Run \"set setup-background-mining 1\" to change.");
+  message_writer(console_color_yellow, false) << tr("Background mining not enabled. Run \"set setup-background-mining 1\" to change."); /* NOTE: Don't use bright because it's not important */
 }
 //----------------------------------------------------------------------------------------------------
 void simple_wallet::check_background_mining(const epee::wipeable_string &password)
@@ -4618,14 +4634,14 @@ void simple_wallet::check_background_mining(const epee::wipeable_string &passwor
 
   if (setup == tools::wallet2::BackgroundMiningMaybe)
   {
-    message_writer() << tr("The daemon is not set up to background mine.");
-    message_writer() << tr("With background mining enabled, the daemon will mine when idle and not on batttery.");
-    message_writer() << tr("Enabling this supports the network you are using, and makes you eligible for receiving new amit");
-    std::string accepted = input_line(tr("Do you want to do it now? (Y/Yes/N/No): "));
+    message_writer(console_color_yellow, true) << tr("The daemon is not set up to background mine.");
+    message_writer(console_color_yellow, true) << tr("With background mining enabled, the daemon will mine when idle and not on batttery.");
+    message_writer(console_color_yellow, true) << tr("Enabling this supports the network you are using, and makes you eligible for receiving new amit");
+    std::string accepted = input_line(tr("Do you want to do it now? (Y)Yes - No(N): "));
     if (std::cin.eof() || !command_line::is_yes(accepted)) {
       m_wallet->setup_background_mining(tools::wallet2::BackgroundMiningNo);
       m_wallet->rewrite(m_wallet_file, password);
-      message_writer(console_color_red, false) << tr("Background mining not enabled. Set setup-background-mining to 1 to change.");
+      message_writer(console_color_yellow, false) << tr("Background mining not enabled. Set setup-background-mining to 1 to change.");
       return;
     }
     m_wallet->setup_background_mining(tools::wallet2::BackgroundMiningYes);
@@ -4849,7 +4865,7 @@ void simple_wallet::on_new_block(uint64_t height, const cryptonote::block& block
 //----------------------------------------------------------------------------------------------------
 void simple_wallet::on_money_received(uint64_t height, const crypto::hash &txid, const cryptonote::transaction& tx, uint64_t amount, const cryptonote::subaddress_index& subaddr_index, uint64_t unlock_time)
 {
-  message_writer(console_color_green, false) << "\r" <<
+  success_msg_writer() << "\r" <<
     tr("Height ") << height << ", " <<
     tr("txid ") << txid << ", " <<
     print_money(amount) << ", " <<
@@ -4927,7 +4943,7 @@ boost::optional<epee::wipeable_string> simple_wallet::on_get_password(const char
 //----------------------------------------------------------------------------------------------------
 void simple_wallet::on_device_button_request(uint64_t code)
 {
-  message_writer(console_color_white, false) << tr("Device requires attention");
+  message_writer(console_color_yellow, false) << tr("Device requires attention");
 }
 //----------------------------------------------------------------------------------------------------
 boost::optional<epee::wipeable_string> simple_wallet::on_device_pin_request()
@@ -4944,7 +4960,7 @@ boost::optional<epee::wipeable_string> simple_wallet::on_device_pin_request()
 boost::optional<epee::wipeable_string> simple_wallet::on_device_passphrase_request(bool on_device)
 {
   if (on_device){
-    message_writer(console_color_white, true) << tr("Please enter the device passphrase on the device");
+    message_writer(console_color_yellow, true) << tr("Please enter the device passphrase on the device");
     return boost::none;
   }
 
@@ -4971,7 +4987,7 @@ void simple_wallet::on_refresh_finished(uint64_t start_height, uint64_t fetched_
   // Finished first refresh for HW device and money received -> KI sync
   message_writer() << "\n" << tr("The first refresh has finished for the HW-based wallet with received money. hw_key_images_sync is needed. ");
 
-  std::string accepted = input_line(tr("Do you want to do it now? (Y/Yes/N/No): "));
+  std::string accepted = input_line(tr("Do you want to do it now? (Y)Yes - No(N): "));
   if (std::cin.eof() || !command_line::is_yes(accepted)) {
     message_writer(console_color_red, false) << tr("hw_key_images_sync skipped. Run command manually before a transfer.");
     return;
@@ -5025,7 +5041,7 @@ bool simple_wallet::refresh_main(uint64_t start_height, enum ResetType reset, bo
     ok = true;
     // Clear line "Height xxx of xxx"
     std::cout << "\r                                                                \r";
-    success_msg_writer(true) << tr("Refresh done, blocks scanned: ") << fetched_blocks;
+    success_msg_writer() << tr("Refresh done, blocks scanned: ") << fetched_blocks;
     if (is_init)
       print_accounts();
     show_balance_unlocked();
@@ -5297,7 +5313,7 @@ bool simple_wallet::show_payments(const std::vector<std::string> &args)
         {
           payments_found = true;
         }
-        success_msg_writer(true) <<
+        success_msg_writer() <<
           boost::format("%68s%68s%12s%21s%16s%16s") %
           payment_id %
           pd.m_tx_hash %
@@ -5865,7 +5881,7 @@ bool simple_wallet::transfer_main(int transfer_type, const std::vector<std::stri
       if (!ciphertext.empty())
       {
         get_message_store().process_wallet_created_data(get_multisig_wallet_state(), mms::message_type::partially_signed_tx, ciphertext);
-        success_msg_writer(true) << tr("Unsigned transaction(s) successfully written to MMS");
+        success_msg_writer() << tr("Unsigned transaction(s) successfully written to MMS");
       }
     }
     else if (m_wallet->multisig())
@@ -5878,7 +5894,7 @@ bool simple_wallet::transfer_main(int transfer_type, const std::vector<std::stri
       }
       else
       {
-        success_msg_writer(true) << tr("Unsigned transaction(s) successfully written to file: ") << "multisig_amity_tx";
+        success_msg_writer() << tr("Unsigned transaction(s) successfully written to file: ") << "multisig_amity_tx";
       }
     }
     else if (m_wallet->get_account().get_device().has_tx_cold_sign())
@@ -5915,7 +5931,7 @@ bool simple_wallet::transfer_main(int transfer_type, const std::vector<std::stri
       }
       else
       {
-        success_msg_writer(true) << tr("Unsigned transaction(s) successfully written to file: ") << "unsigned_amity_tx";
+        success_msg_writer() << tr("Unsigned transaction(s) successfully written to file: ") << "unsigned_amity_tx";
       }
     }
     else
@@ -6015,7 +6031,7 @@ bool simple_wallet::sweep_unmixable(const std::vector<std::string> &args_)
       }
       else
       {
-        success_msg_writer(true) << tr("Unsigned transaction(s) successfully written to file: ") << "multisig_monero_tx";
+        success_msg_writer() << tr("Unsigned transaction(s) successfully written to file: ") << "multisig_monero_tx";
       }
     }
     else if (m_wallet->watch_only())
@@ -6027,7 +6043,7 @@ bool simple_wallet::sweep_unmixable(const std::vector<std::string> &args_)
       }
       else
       {
-        success_msg_writer(true) << tr("Unsigned transaction(s) successfully written to file: ") << "unsigned_monero_tx";
+        success_msg_writer() << tr("Unsigned transaction(s) successfully written to file: ") << "unsigned_monero_tx";
       }
     }
     else
@@ -6308,7 +6324,7 @@ bool simple_wallet::sweep_main(uint64_t below, bool locked, const std::vector<st
       }
       else
       {
-        success_msg_writer(true) << tr("Unsigned transaction(s) successfully written to file: ") << "multisig_amity_tx";
+        success_msg_writer() << tr("Unsigned transaction(s) successfully written to file: ") << "multisig_amity_tx";
       }
     }
     else if (m_wallet->get_account().get_device().has_tx_cold_sign())
@@ -6345,7 +6361,7 @@ bool simple_wallet::sweep_main(uint64_t below, bool locked, const std::vector<st
       }
       else
       {
-        success_msg_writer(true) << tr("Unsigned transaction(s) successfully written to file: ") << "unsigned_amity_tx";
+        success_msg_writer() << tr("Unsigned transaction(s) successfully written to file: ") << "unsigned_amity_tx";
       }
     }
     else
@@ -6535,7 +6551,7 @@ bool simple_wallet::sweep_single(const std::vector<std::string> &args_)
       }
       else
       {
-        success_msg_writer(true) << tr("Unsigned transaction(s) successfully written to file: ") << "multisig_amity_tx";
+        success_msg_writer() << tr("Unsigned transaction(s) successfully written to file: ") << "multisig_amity_tx";
       }
     }
     else if (m_wallet->watch_only())
@@ -6547,13 +6563,13 @@ bool simple_wallet::sweep_single(const std::vector<std::string> &args_)
       }
       else
       {
-        success_msg_writer(true) << tr("Unsigned transaction(s) successfully written to file: ") << "unsigned_amity_tx";
+        success_msg_writer() << tr("Unsigned transaction(s) successfully written to file: ") << "unsigned_amity_tx";
       }
     }
     else
     {
       m_wallet->commit_tx(ptx_vector[0]);
-      success_msg_writer(true) << tr("Money successfully sent, transaction: ") << get_transaction_hash(ptx_vector[0].tx);
+      success_msg_writer() << tr("Money successfully sent, transaction: ") << get_transaction_hash(ptx_vector[0].tx);
     }
 
   }
@@ -6862,7 +6878,7 @@ bool simple_wallet::sign_transfer(const std::vector<std::string> &args_)
       txids_as_text += (", ");
     txids_as_text += epee::string_tools::pod_to_hex(get_transaction_hash(t.tx));
   }
-  success_msg_writer(true) << tr("Transaction successfully signed to file ") << "signed_amity_tx" << ", txid " << txids_as_text;
+  success_msg_writer() << tr("Transaction successfully signed to file ") << "signed_amity_tx" << ", txid " << txids_as_text;
   if (export_raw)
   {
     std::string rawfiles_as_text;
@@ -6872,7 +6888,7 @@ bool simple_wallet::sign_transfer(const std::vector<std::string> &args_)
         rawfiles_as_text += ", ";
       rawfiles_as_text += "signed_amity_tx_raw" + (ptx.size() == 1 ? "" : ("_" + std::to_string(i)));
     }
-    success_msg_writer(true) << tr("Transaction raw hex data exported to ") << rawfiles_as_text;
+    success_msg_writer() << tr("Transaction raw hex data exported to ") << rawfiles_as_text;
   }
   return true;
 }
@@ -8003,7 +8019,7 @@ bool simple_wallet::rescan_blockchain(const std::vector<std::string> &args_)
   if (start_height > wallet_from_height)
   {
     message_writer() << tr("Warning: your restore height is higher than wallet restore height: ") << wallet_from_height;
-    std::string confirm = input_line(tr("Rescan anyway ? (Y/Yes/N/No): "));
+    std::string confirm = input_line(tr("Rescan anyway ? (Y)Yes - No(N): "));
     if(!std::cin.eof())
     {
       if (!command_line::is_yes(confirm))
@@ -8090,7 +8106,7 @@ bool simple_wallet::run()
   m_auto_refresh_enabled = m_wallet->auto_refresh();
   m_idle_thread = boost::thread([&]{wallet_idle_thread();});
 
-  message_writer(console_color_green, false) << "Background refresh thread started";
+  success_msg_writer() << "Background refresh thread started";
   return m_cmd_binder.run_handling([this](){return get_prompt();}, "");
 }
 //----------------------------------------------------------------------------------------------------
@@ -8843,7 +8859,7 @@ bool simple_wallet::hw_key_images_sync(const std::vector<std::string> &args)
 void simple_wallet::key_images_sync_intern(){
   try
   {
-    message_writer(console_color_white, false) << tr("Please confirm the key image sync on the device");
+    message_writer(console_color_yellow, false) << tr("Please confirm the key image sync on the device");
 
     uint64_t spent = 0, unspent = 0;
     uint64_t height = m_wallet->cold_key_image_sync(spent, unspent);
@@ -9147,14 +9163,14 @@ void simple_wallet::commit_or_save(std::vector<tools::wallet2::pending_tx>& ptx_
       const std::string blob_hex = epee::string_tools::buff_to_hex_nodelimer(blob);
       const std::string filename = "raw_amity_tx" + (ptx_vector.size() == 1 ? "" : ("_" + std::to_string(i++)));
       if (epee::file_io_utils::save_string_to_file(filename, blob_hex))
-        success_msg_writer(true) << tr("Transaction successfully saved to ") << filename << tr(", txid ") << txid;
+        success_msg_writer() << tr("Transaction successfully saved to ") << filename << tr(", txid ") << txid;
       else
         fail_msg_writer() << tr("Failed to save transaction to ") << filename << tr(", txid ") << txid;
     }
     else
     {
       m_wallet->commit_tx(ptx);
-      success_msg_writer(true) << tr("Transaction successfully submitted, transaction ") << txid << ENDL
+      success_msg_writer() << tr("Transaction successfully submitted, transaction ") << txid << ENDL
       << tr("You can check its status by using the `show_transfers` command.");
     }
     // if no exception, remove element from vector
@@ -9208,7 +9224,7 @@ int main(int argc, char* argv[])
     sw::tr("This is the command line Amity wallet. It needs to connect to an Amity daemon to work correctly."),
     desc_params,
     positional_options,
-    [](const std::string &s, bool emphasis){ tools::scoped_message_writer(emphasis ? epee::console_color_white : epee::console_color_default, true) << s; },
+    [](const std::string &s, bool emphasis){ tools::scoped_message_writer(emphasis ? epee::console_color_yellow : epee::console_color_default, true) << s; },
     "amity-wallet-cli.log"
   );
 
@@ -9264,7 +9280,7 @@ int main(int argc, char* argv[])
 }
 bool simple_wallet::user_confirms(const std::string &question)
 {
-   std::string answer = input_line(question + tr(" (Y/Yes/N/No): "));
+   std::string answer = input_line(question + tr(" (Y)Yes - No(N): "));
    return !std::cin.eof() && command_line::is_yes(answer);
 }
 
@@ -10262,4 +10278,3 @@ bool simple_wallet::mms(const std::vector<std::string> &args)
   }
   return true;
 }
-
