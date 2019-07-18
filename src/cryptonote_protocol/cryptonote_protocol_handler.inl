@@ -325,6 +325,11 @@ namespace cryptonote
 
     if(m_core.have_block(hshd.top_id))
     {
+      if (target > hshd.current_height)
+      {
+        MINFO(context << "the peer doesn't appear to be synced, disconnecting");
+        return false;
+      }
       context.m_state = cryptonote_connection_context::state_normal;
       if(is_inital && target == m_core.get_current_blockchain_height())
         on_connection_synchronized();
