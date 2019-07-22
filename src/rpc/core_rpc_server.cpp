@@ -832,7 +832,7 @@ namespace cryptonote
         {
           MERROR("Failed to determine pool info for " << tx_hash);
           e.double_spend_seen = false;
-          e.relayed - false;
+          e.relayed = false;
         }
       }
       else
