@@ -248,6 +248,35 @@ namespace nodetool
   }
   //-----------------------------------------------------------------------------------
   template<class t_payload_net_handler>
+  bool node_server<t_payload_net_handler>::add_peer(const std::string &address)
+  {
+    const uint16_t default_port = cryptonote::get_config(m_nettype).P2P_DEFAULT_PORT;
+    expect<epee::net_utils::network_address> adr = net::get_network_address(address, default_port);
+    if(adr == net::error::unsupported_address || !adr)
+    {
+      MINFO("Not adding peer due to invalid address: " << address);
+      return false;
+    }
+
+    auto zone_entry = m_network_zones.find(adr->get_zone());
+    if(zone_entry == m_network_zones.end())
+    {
+      MINFO("Not adding peer " << address << " because it resides in an unsupported zone");
+      return false;
+    }
+    nodetool::peerlist_entry pe = AUTO_VAL_INIT(pe);
+    pe.id = crypto::rand<uint64_t>();
+    pe.adr = std::move(*adr);
+    if(!zone_entry->second.m_peerlist.append_with_peer_white(pe))
+    {
+      MERROR("Failed to add peer " << address << " due to internal error");
+      return false;
+    }
+    MCLOG_CYAN(el::Level::Info, "global", "Peer " << address << " added.");
+    return true;
+  }
+  //-----------------------------------------------------------------------------------
+  template<class t_payload_net_handler>
   bool node_server<t_payload_net_handler>::handle_command_line(
       const boost::program_options::variables_map& vm
     )
@@ -352,7 +381,7 @@ namespace nodetool
       std::string v = command_line::get_arg(vm, arg_min_ver);
       if (!v.empty())
       {
-        MGINFO_CYAN("Blocking all hosts with versions < " << v);
+        MGUSER_CYAN("Blocking all hosts with versions < " << v);
 
         m_minimum_version = version_string_to_integer(v);
         m_min_version_override = true;
@@ -1000,7 +1029,10 @@ namespace nodetool
       }
       if(!context.m_is_income)
         m_network_zones.at(context.m_remote_address.get_zone()).m_peerlist.set_peer_just_seen(context.peer_id, context.m_remote_address, context.m_rpc_port);
-      m_payload_handler.process_payload_sync_data(rsp.payload_data, context, false);
+      if (!m_payload_handler.process_payload_sync_data(rsp.payload_data, context, false))
+      {
+        m_network_zones.at(context.m_remote_address.get_zone()).m_net_server.get_config_object().close(context.m_connection_id );
+      }
     });
 
     if(!r)
@@ -1154,6 +1186,7 @@ namespace nodetool
       LOG_PRINT_CC_PRIORITY_NODE(is_priority, *con, "Failed to HANDSHAKE with peer "
         << na.str()
         /*<< ", try " << try_count*/);
+      zone.m_net_server.get_config_object().close(con->m_connection_id);
       return false;
     }
 
@@ -1222,7 +1255,7 @@ namespace nodetool
       bool is_priority = is_priority_node(na);
 
       LOG_PRINT_CC_PRIORITY_NODE(is_priority, *con, "Failed to HANDSHAKE with peer " << na.str());
-
+      zone.m_net_server.get_config_object().close(con->m_connection_id);
       return false;
     }
 
@@ -1620,7 +1653,7 @@ namespace nodetool
     {
       if (m_hide_my_port || public_zone->second.m_config.m_net_config.max_in_connection_count == 0)
       {
-        MGINFO("Incoming connections disabled, enable them for full connectivity");
+        MGUSER("Incoming connections disabled, enable them for full connectivity");
       }
       else
       {
@@ -1997,7 +2030,7 @@ namespace nodetool
     const epee::net_utils::zone zone_type = context.m_remote_address.get_zone();
     network_zone& zone = m_network_zones.at(zone_type);
 
-    zone.m_peerlist.get_peerlist_head(rsp.local_peerlist_new);
+    zone.m_peerlist.get_peerlist_head(rsp.local_peerlist_new, true);
     m_payload_handler.get_payload_sync_data(rsp.payload_data);
 
     /* Tor/I2P nodes receiving connections via forwarding (from tor/i2p daemon)
@@ -2127,7 +2160,7 @@ namespace nodetool
     });
 
     //fill response
-    zone.m_peerlist.get_peerlist_head(rsp.local_peerlist_new);
+    zone.m_peerlist.get_peerlist_head(rsp.local_peerlist_new, true);
     get_local_node_data(rsp.node_data, zone);
     m_payload_handler.get_payload_sync_data(rsp.payload_data);
     LOG_DEBUG_CC(context, "COMMAND_HANDSHAKE");
