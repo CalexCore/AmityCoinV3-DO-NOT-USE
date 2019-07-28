@@ -30,6 +30,7 @@
 //
 // Parts of this file are originally copyright (c) 2012-2013 The Cryptonote developers
 
+#include "version.h"
 #include "string_tools.h"
 #include "common/password.h"
 #include "common/scoped_message_writer.h"
@@ -453,12 +454,13 @@ bool t_rpc_command_executor::show_status() {
     }
   }
 
-  tools::success_msg_writer() << boost::format("Height: %llu/%llu (%.1f%%) on %s%s, %s, net hash %s, v%u%s, %u(out)+%u(in) connections")
+  tools::success_msg_writer() << boost::format("Height: %llu/%llu (%.1f%%) on %s%s, software version %s, %s, net hash %s, v%u%s, %u(out)+%u(in) connections")
     % (unsigned long long)ires.height
     % (unsigned long long)net_height
     % get_sync_percentage(ires)
     % (ires.testnet ? "testnet" : ires.stagenet ? "stagenet" : "mainnet")
     % bootstrap_msg
+    % MONERO_VERSION_FULL
     % (!has_mining_info ? "mining info unavailable" : mining_busy ? "syncing" : mres.active ? ( ( mres.is_background_mining_enabled ? "smart " : "" ) + std::string("mining at ") + get_mining_speed(mres.speed) ) : "not mining")
     % get_mining_speed(ires.difficulty / ires.target)
     % (unsigned)hfres.version
@@ -1222,7 +1224,7 @@ bool t_rpc_command_executor::donate_mining(uint32_t blocks_count)
   {
     if (m_rpc_client->rpc_request(req, res, "/set_donate_level", fail_message.c_str()))
     {
-      tools::success_msg_writer() << "Mining started";
+      tools::success_msg_writer() << "Donation level set";
     }
   }
   else
@@ -1231,6 +1233,15 @@ bool t_rpc_command_executor::donate_mining(uint32_t blocks_count)
     {
       tools::fail_msg_writer() << make_error(fail_message, res.status);
       return true;
+    }
+    const uint8_t donate_percent = res.blocks;
+    if (donate_percent > 0)
+    {
+      tools::success_msg_writer() << "Mining set to donate " << (unsigned)donate_percent << "% of blocks to the dev fund. Thank you for your support.";
+    }
+    else
+    {
+      tools::success_msg_writer() << "Mining donations disabled.";
     }
   }
 

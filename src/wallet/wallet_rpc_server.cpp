@@ -1,3 +1,4 @@
+// Copyright (c) 2019, The NERVA Project
 // Copyright (c) 2017-2018, The Masari Project
 // Copyright (c) 2014-2018, The Monero Project
 // 
@@ -68,7 +69,12 @@ namespace
   const command_line::arg_descriptor<bool> arg_restricted = {"restricted-rpc", "Restricts to view-only commands", false};
   const command_line::arg_descriptor<std::string> arg_wallet_dir = {"wallet-dir", "Directory for newly created wallets"};
   const command_line::arg_descriptor<bool> arg_prompt_for_password = {"prompt-for-password", "Prompts for password when not provided", false};
-
+  const command_line::arg_descriptor<std::string> arg_rpc_ssl = {"rpc-ssl", tools::wallet2::tr("Enable SSL on wallet RPC connections: enabled|disabled|autodetect"), "autodetect"};
+  const command_line::arg_descriptor<std::string> arg_rpc_ssl_private_key = {"rpc-ssl-private-key", tools::wallet2::tr("Path to a PEM format private key"), ""};
+  const command_line::arg_descriptor<std::string> arg_rpc_ssl_certificate = {"rpc-ssl-certificate", tools::wallet2::tr("Path to a PEM format certificate"), ""};
+  const command_line::arg_descriptor<std::string> arg_rpc_ssl_ca_certificates = {"rpc-ssl-ca-certificates", tools::wallet2::tr("Path to file containing concatenated PEM format certificate(s) to replace system CA(s).")};
+  const command_line::arg_descriptor<std::vector<std::string>> arg_rpc_ssl_allowed_fingerprints = {"rpc-ssl-allowed-fingerprints", tools::wallet2::tr("List of certificate fingerprints to allow")};
+  
   constexpr const char default_rpc_username[] = "amity";
 
   boost::optional<tools::password_container> password_prompter(const char *prompt, bool verify)
@@ -157,12 +163,13 @@ namespace tools
   //------------------------------------------------------------------------------------------------------------------------------
   bool wallet_rpc_server::init(const boost::program_options::variables_map *vm)
   {
-    auto rpc_config = cryptonote::rpc_args::process(*vm);
+    auto rpc_config = cryptonote::rpc_args::process(*vm, false, true);
     if (!rpc_config)
       return false;
 
     m_vm = vm;
 
+    epee::net_utils::http::authentication_type http_auth_type = rpc_config->auth_type;
     boost::optional<epee::net_utils::http::login> http_login{};
     std::string bind_port = command_line::get_arg(*m_vm, arg_rpc_bind_port);
     const bool disable_auth = command_line::get_arg(*m_vm, arg_disable_rpc_login);
@@ -199,6 +206,7 @@ namespace tools
         LOG_ERROR(tr("Cannot specify --") << arg_disable_rpc_login.name << tr(" and --") << arg.rpc_login.name);
         return false;
       }
+      http_auth_type = epee::net_utils::http::http_auth_none;
     }
     else // auth enabled
     {
@@ -239,14 +247,49 @@ namespace tools
       assert(bool(http_login));
     } // end auth enabled
 
+    auto rpc_ssl_private_key = command_line::get_arg(vm, arg_rpc_ssl_private_key);
+    auto rpc_ssl_certificate = command_line::get_arg(vm, arg_rpc_ssl_certificate);
+    auto rpc_ssl_ca_file = command_line::get_arg(vm, arg_rpc_ssl_ca_certificates);
+    auto rpc_ssl_allowed_fingerprints = command_line::get_arg(vm, arg_rpc_ssl_allowed_fingerprints);
+    auto rpc_ssl = command_line::get_arg(vm, arg_rpc_ssl);
+    epee::net_utils::ssl_options_t rpc_ssl_options = epee::net_utils::ssl_support_t::e_ssl_support_enabled;
+    if (!rpc_ssl_ca_file.empty() || !rpc_ssl_allowed_fingerprints.empty())
+    {
+      std::vector<std::vector<uint8_t>> allowed_fingerprints{ rpc_ssl_allowed_fingerprints.size() };
+      std::transform(rpc_ssl_allowed_fingerprints.begin(), rpc_ssl_allowed_fingerprints.end(), allowed_fingerprints.begin(), epee::from_hex::vector);
+      for (const auto &fpr: allowed_fingerprints)
+      {
+        if (fpr.size() != SSL_FINGERPRINT_SIZE)
+        {
+          MERROR("SHA-256 fingerprint should be " BOOST_PP_STRINGIZE(SSL_FINGERPRINT_SIZE) " bytes long.");
+          return false;
+        }
+      }
+      rpc_ssl_options = epee::net_utils::ssl_options_t{
+        std::move(allowed_fingerprints), std::move(rpc_ssl_ca_file)
+      };
+    }
+    // user specified CA file or fingeprints implies enabled SSL by default
+    if (rpc_ssl_options.verification != epee::net_utils::ssl_verification_t::user_certificates || !command_line::is_arg_defaulted(vm, arg_rpc_ssl))
+    {
+      if (!epee::net_utils::ssl_support_from_string(rpc_ssl_options.support, rpc_ssl))
+      {
+        MERROR("Invalid argument for " << std::string(arg_rpc_ssl.name));
+        return false;
+      }
+    }
+    rpc_ssl_options.auth = epee::net_utils::ssl_authentication_t{
+      std::move(rpc_ssl_private_key), std::move(rpc_ssl_certificate)
+    };
+
     m_auto_refresh_period = DEFAULT_AUTO_REFRESH_PERIOD;
     m_last_auto_refresh_time = boost::posix_time::min_date_time;
 
     m_net_server.set_threads_prefix("RPC");
     auto rng = [](size_t len, uint8_t *ptr) { return crypto::rand(len, ptr); };
     return epee::http_server_impl_base<wallet_rpc_server, connection_context>::init(
-      rng, std::move(bind_port), std::move(rpc_config->bind_ip), std::move(rpc_config->access_control_origins), std::move(http_login),
-      std::move(rpc_config->ssl_options)
+      rng, std::move(bind_port), std::move(rpc_config->bind_ip), std::move(rpc_config->access_control_origins),
+      http_auth_type, std::move(http_login), std::move(rpc_config->ssl_options)
     );
   }
   //------------------------------------------------------------------------------------------------------------------------------
@@ -294,7 +337,7 @@ namespace tools
       entry.destinations.push_back(wallet_rpc::transfer_destination());
       wallet_rpc::transfer_destination &td = entry.destinations.back();
       td.amount = d.amount;
-      td.address = get_account_address_as_str(m_wallet->nettype(), d.is_subaddress, d.addr);
+      td.address = d.original.empty() ? get_account_address_as_str(m_wallet->nettype(), d.is_subaddress, d.addr) : d.original;
     }
 
     entry.type = "out";
@@ -319,6 +362,14 @@ namespace tools
     entry.amount = pd.m_amount_in - pd.m_change - entry.fee;
     entry.unlock_time = pd.m_tx.unlock_time;
     entry.note = m_wallet->get_tx_note(txid);
+
+    for (const auto &d: pd.m_dests) {
+      entry.destinations.push_back(wallet_rpc::transfer_destination());
+      wallet_rpc::transfer_destination &td = entry.destinations.back();
+      td.amount = d.amount;
+      td.address = d.original.empty() ? get_account_address_as_str(m_wallet->nettype(), d.is_subaddress, d.addr) : d.original;
+    }
+    
     entry.type = is_failed ? "failed" : "pending";
     entry.subaddr_index = { pd.m_subaddr_account, 0 };
     for (uint32_t i: pd.m_subaddr_indices)
@@ -927,7 +978,7 @@ namespace tools
     }
 
     try
-    {     
+    {
       uint32_t priority = m_wallet->adjust_priority(req.priority);
       LOG_PRINT_L2("on_transfer_split calling create_transactions_2");
       std::vector<wallet2::pending_tx> ptx_vector = m_wallet->create_transactions_2(dsts, DEFAULT_MIXIN, req.unlock_time, priority, extra, req.account_index, req.subaddr_indices);
@@ -1336,7 +1387,7 @@ namespace tools
     }
 
     try
-    {      
+    {
       uint32_t priority = m_wallet->adjust_priority(req.priority);
       std::vector<wallet2::pending_tx> ptx_vector = m_wallet->create_transactions_all(req.below_amount, dsts[0].addr, dsts[0].is_subaddress, req.outputs, DEFAULT_MIXIN, req.unlock_time, priority, extra, req.account_index, req.subaddr_indices);
 
@@ -1752,6 +1803,8 @@ namespace tools
         rpc_transfers.tx_hash      = epee::string_tools::pod_to_hex(td.m_txid);
         rpc_transfers.subaddr_index = {td.m_subaddr_index.major, td.m_subaddr_index.minor};
         rpc_transfers.key_image    = td.m_key_image_known ? epee::string_tools::pod_to_hex(td.m_key_image) : "";
+        rpc_transfers.block_height = td.m_block_height;
+        rpc_transfers.frozen       = td.m_frozen;
         rpc_transfers.unlocked     = m_wallet->is_transfer_unlocked(td);
         res.transfers.push_back(rpc_transfers);
       }
@@ -4146,9 +4199,10 @@ namespace tools
       { cryptonote::TESTNET, "testnet" },
       { cryptonote::STAGENET, "stagenet" },
     };
+    if (!req.any_net_type && !m_wallet) return not_open(er);
     for (const auto &net_type: net_types)
     {
-      if (!req.any_net_type && net_type.type != m_wallet->nettype())
+      if (!req.any_net_type && (!m_wallet || net_type.type != m_wallet->nettype()))
         continue;
       if (req.allow_openalias)
       {
@@ -4233,6 +4287,7 @@ namespace tools
     {
       er.code = WALLET_RPC_ERROR_CODE_NO_DAEMON_CONNECTION;
       er.message = "SSL is enabled but no user certificate or fingerprints were provided";
+      return false;
     }
 
     if (!m_wallet->set_daemon(req.address, boost::none, req.trusted, std::move(ssl_options)))
@@ -4467,7 +4522,7 @@ int main(int argc, char** argv) {
   command_line::add_arg(desc_params, arg_rpc_bind_port);
   command_line::add_arg(desc_params, arg_disable_rpc_login);
   command_line::add_arg(desc_params, arg_restricted);
-  cryptonote::rpc_args::init_options(desc_params);
+  cryptonote::rpc_args::init_options(desc_params, false, true);
   command_line::add_arg(desc_params, arg_wallet_file);
   command_line::add_arg(desc_params, arg_from_json);
   command_line::add_arg(desc_params, arg_wallet_dir);

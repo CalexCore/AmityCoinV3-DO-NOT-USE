@@ -165,12 +165,13 @@ namespace cryptonote
         MAP_JON_RPC_WE_IF("relay_tx",            on_relay_tx,                   COMMAND_RPC_RELAY_TX, !m_restricted)
         MAP_JON_RPC_WE_IF("sync_info",           on_sync_info,                  COMMAND_RPC_SYNC_INFO, !m_restricted)
         MAP_JON_RPC_WE("get_txpool_backlog",     on_get_txpool_backlog,         COMMAND_RPC_GET_TRANSACTION_POOL_BACKLOG)
-        MAP_JON_RPC_WE("get_output_distribution", on_get_output_distribution, COMMAND_RPC_GET_OUTPUT_DISTRIBUTION)
-        MAP_JON_RPC_WE("get_generated_coins", on_get_generated_coins,        COMMAND_RPC_GET_GENERATED_COINS)
-        MAP_JON_RPC_WE("get_min_version", on_get_min_version,        COMMAND_RPC_MIN_VERSION)
-        MAP_JON_RPC_WE("get_tx_pubkey", on_get_tx_pubkey,        COMMAND_RPC_GET_TX_PUBKEY)
-        MAP_JON_RPC_WE("decode_outputs", on_decode_outputs,        COMMAND_RPC_DECODE_OUTPUTS)
-      END_JSON_RPC_MAP()
+        MAP_JON_RPC_WE("get_output_distribution", on_get_output_distribution,   COMMAND_RPC_GET_OUTPUT_DISTRIBUTION)
+        MAP_JON_RPC_WE("get_generated_coins",   on_get_generated_coins,         COMMAND_RPC_GET_GENERATED_COINS)
+        MAP_JON_RPC_WE("get_min_version",       on_get_min_version,             COMMAND_RPC_MIN_VERSION)
+        MAP_JON_RPC_WE("get_tx_pubkey",         on_get_tx_pubkey,               COMMAND_RPC_GET_TX_PUBKEY)
+        MAP_JON_RPC_WE("decode_outputs",        on_decode_outputs,              COMMAND_RPC_DECODE_OUTPUTS)
+        MAP_JON_RPC_WE_IF("add_peer",           on_add_peer,                 COMMAND_RPC_ADD_PEER, !m_restricted)
+        END_JSON_RPC_MAP()
     END_URI_MAP2()
 
     bool on_get_height(const COMMAND_RPC_GET_HEIGHT::request& req, COMMAND_RPC_GET_HEIGHT::response& res, const connection_context *ctx = NULL);
@@ -240,11 +241,13 @@ namespace cryptonote
     bool on_get_min_version(const COMMAND_RPC_MIN_VERSION::request& req, COMMAND_RPC_MIN_VERSION::response& res, epee::json_rpc::error& error_resp, const connection_context *ctx = NULL);
     bool on_get_tx_pubkey(const COMMAND_RPC_GET_TX_PUBKEY::request& req, COMMAND_RPC_GET_TX_PUBKEY::response& res, epee::json_rpc::error& error_resp, const connection_context *ctx = NULL);
     bool on_decode_outputs(const COMMAND_RPC_DECODE_OUTPUTS::request& req, COMMAND_RPC_DECODE_OUTPUTS::response& res, epee::json_rpc::error& error_resp, const connection_context *ctx = NULL);
+    bool on_add_peer(const COMMAND_RPC_ADD_PEER::request& req, COMMAND_RPC_ADD_PEER::response& res, epee::json_rpc::error& error_resp, const connection_context *ctx = NULL);
     //-----------------------
 
 private:
     bool check_core_busy();
     bool check_core_ready();
+     bool add_host_fail(const connection_context *ctx);
     
     //utils
     uint64_t get_block_reward(const block& blk);
@@ -264,5 +267,7 @@ private:
     bool m_was_bootstrap_ever_used;
     network_type m_nettype;
     bool m_restricted;
+    epee::critical_section m_host_fails_score_lock;
+    std::map<std::string, uint64_t> m_host_fails_score;
   };
 }

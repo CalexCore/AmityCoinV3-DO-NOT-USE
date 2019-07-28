@@ -335,6 +335,13 @@ namespace mms
   };
 }
 
+BOOST_CLASS_VERSION(mms::file_data, 0)
+BOOST_CLASS_VERSION(mms::message_store, 0)
+BOOST_CLASS_VERSION(mms::message, 0)
+BOOST_CLASS_VERSION(mms::file_transport_message, 0)
+BOOST_CLASS_VERSION(mms::authorized_signer, 1)
+BOOST_CLASS_VERSION(mms::auto_config_data, 0)
+
 namespace boost
 {
   namespace serialization

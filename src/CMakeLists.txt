@@ -133,6 +133,10 @@ if(NOT IOS)
   add_subdirectory(blockchain_utilities)
 endif()
 
+if(CMAKE_BUILD_TYPE STREQUAL Debug AND BUILD_EXTRAS)
+  add_subdirectory(debug_utilities)
+endif()
+
 if(PER_BLOCK_CHECKPOINT)
   add_subdirectory(blocks)
 endif()

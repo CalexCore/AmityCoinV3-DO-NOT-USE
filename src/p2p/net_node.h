@@ -208,18 +208,18 @@ namespace nodetool
     typedef t_payload_net_handler payload_net_handler;
 
     node_server(t_payload_net_handler& payload_handler)
-      :m_payload_handler(payload_handler),
+      : m_payload_handler(payload_handler),
         m_external_port(0),
         m_rpc_port(0),
-    m_allow_local_ip(false),
-    m_hide_my_port(false),
-    m_no_igd(false),
-    m_offline(false),
-    m_save_graph(false),
-    is_closing(false),
-    m_minimum_version(0),
-    m_min_version_override(false),
-    m_network_id()
+        m_allow_local_ip(false),
+        m_hide_my_port(false),
+        m_no_igd(false),
+        m_offline(false),
+        m_save_graph(false),
+        is_closing(false),
+        m_minimum_version(0),
+        m_min_version_override(false),
+        m_network_id()
     {}
     virtual ~node_server();
 
@@ -248,6 +248,7 @@ namespace nodetool
     virtual bool block_host(const epee::net_utils::network_address &adress, time_t seconds = 0);
     virtual bool unblock_host(const epee::net_utils::network_address &address);
     virtual std::map<std::string, time_t> get_blocked_hosts() { CRITICAL_REGION_LOCAL(m_blocked_hosts_lock); return m_blocked_hosts; }
+    virtual bool add_peer(const std::string &address);
   private:
     const std::vector<std::string> m_seed_nodes_list =
     {

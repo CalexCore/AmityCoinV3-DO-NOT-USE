@@ -653,7 +653,7 @@ uint64_t BlockchainLMDB::get_estimated_batch_size(uint64_t batch_num_blocks, uin
       ++num_blocks_used;
     }
     if (my_rtxn) block_rtxn_stop();
-    avg_block_size = total_block_size / num_blocks_used;
+    avg_block_size = total_block_size / (num_blocks_used ? num_blocks_used : 1);
     MDEBUG("average block size across recent " << num_blocks_used << " blocks: " << avg_block_size);
   }
 estim:
@@ -936,11 +936,11 @@ void BlockchainLMDB::add_tx_amount_output_indices(const uint64_t tx_id,
 
   int result = 0;
 
-  int num_outputs = amount_output_indices.size();
+  size_t num_outputs = amount_output_indices.size();
 
   MDB_val_set(k_tx_id, tx_id);
   MDB_val v;
-  v.mv_data = (void *)amount_output_indices.data();
+  v.mv_data = num_outputs ? (void *)amount_output_indices.data() : (void*)"";
   v.mv_size = sizeof(uint64_t) * num_outputs;
   // LOG_PRINT_L1("tx_outputs[tx_hash] size: " << v.mv_size);
 

@@ -250,7 +250,7 @@ namespace net_utils
     const network_address m_remote_address;
     const bool     m_is_income;
     const time_t   m_started;
-    const time_t   m_ssl;
+    const bool   m_ssl;
     time_t   m_last_recv;
     time_t   m_last_send;
     uint64_t m_recv_cnt;
@@ -294,6 +294,11 @@ namespace net_utils
                                m_max_speed_up(0)
     {}
 
+	 connection_context_base(const connection_context_base& a): connection_context_base()
+    {
+      set_details(a.m_connection_id, a.m_remote_address, a.m_is_income, a.m_ssl);
+    }
+	
     connection_context_base& operator=(const connection_context_base& a)
     {
       set_details(a.m_connection_id, a.m_remote_address, a.m_is_income, a.m_ssl);
