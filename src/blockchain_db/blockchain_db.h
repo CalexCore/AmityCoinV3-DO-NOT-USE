@@ -1,6 +1,6 @@
-// Copyright (c) 2019, The Nerva Project
+// Copyright (c) 2018-2019, The NERVA Project
 // Copyright (c) 2018, The Masari Project
-// Copyright (c) 2014-2018, The Monero Project
+// Copyright (c) 2014-2019, The Monero Project
 //
 // All rights reserved.
 //
@@ -132,6 +132,17 @@ struct tx_data_t
   uint64_t block_id;
 };
 #pragma pack(pop)
+
+struct alt_block_data_t
+{
+  uint64_t height;
+  uint64_t cumulative_size;
+  //TODO: Need 128-bit cumulative diff
+  //uint64_t cumulative_difficulty_low;
+  //uint64_t cumulative_difficulty_high;
+  uint64_t cumulative_difficulty;
+  uint64_t already_generated_coins;
+};
 
 /**
  * @brief a struct containing txpool per transaction metadata
@@ -1286,6 +1297,16 @@ public:
     }
     return result;
   } 
+  // Monero defines a get_output_key function which accepts a final boolean
+  // parameter that determines whether to include an rct zero commitment in the
+  // result, and is defaulted to true. The default cannot be applied sanely
+  // in NERVA, because there are two versions of rct zero commitments.
+  // Therefore, NERVA functions which generate an rct commitment must
+  // include a mandatory parameter specifying the commitment version.
+  // To avoid accidentally merging Monero calls to get_output_key without
+  // addressing the differences in behavior, eliminate this function in NERVA,
+  // replacing it with get_output_key_only and get_output_key_and_commitment.
+  // virtual output_data_t get_output_key(const uint64_t& amount, const uint64_t& index, bool include_commitmemt = true) const = 0;
 
   /**
    * @brief gets an output's tx hash and index
@@ -1434,6 +1455,43 @@ public:
   virtual cryptonote::blobdata get_txpool_tx_blob(const crypto::hash& txid) const = 0;
 
   /**
+   * @brief add a new alternative block
+   *
+   * @param: blkid the block hash
+   * @param: data: the metadata for the block
+   * @param: blob: the block's blob
+   */
+  virtual void add_alt_block(const crypto::hash &blkid, const cryptonote::alt_block_data_t &data, const cryptonote::blobdata &blob) = 0;
+
+  /**
+   * @brief get an alternative block by hash
+   *
+   * @param: blkid the block hash
+   * @param: data: the metadata for the block
+   * @param: blob: the block's blob
+   *
+   * @return true if the block was found in the alternative blocks list, false otherwise
+   */
+  virtual bool get_alt_block(const crypto::hash &blkid, alt_block_data_t *data, cryptonote::blobdata *blob) = 0;
+
+  /**
+   * @brief remove an alternative block
+   *
+   * @param: blkid the block hash
+   */
+  virtual void remove_alt_block(const crypto::hash &blkid) = 0;
+
+  /**
+   * @brief get the number of alternative blocks stored
+   */
+  virtual uint64_t get_alt_block_count() = 0;
+
+  /**
+   * @brief drop all alternative blocks
+   */
+  virtual void drop_alt_blocks() = 0;
+
+  /**
    * @brief runs a function over all txpool transactions
    *
    * The subclass should run the passed function for each txpool tx it has
@@ -1521,7 +1579,23 @@ public:
   virtual bool for_all_outputs(std::function<bool(uint64_t amount, const crypto::hash &tx_hash, uint64_t height, size_t tx_idx)> f) const = 0;
   virtual bool for_all_outputs(uint64_t amount, const std::function<bool(uint64_t height)> &f) const = 0;
 
-
+  /**
+   * @brief runs a function over all alternative blocks stored
+   *
+   * The subclass should run the passed function for each alt block it has
+   * stored, passing (blkid, data, blob) as its parameters.
+   *
+   * If any call to the function returns false, the subclass should return
+   * false.  Otherwise, the subclass returns true.
+   *
+   * The subclass should throw DB_ERROR if any of the expected values are
+   * not found.  Current implementations simply return false.
+   *
+   * @param std::function f the function to run
+   *
+   * @return false if the function returns false for any output, otherwise true
+   */
+  virtual bool for_all_alt_blocks(std::function<bool(const crypto::hash &blkid, const alt_block_data_t &data, const cryptonote::blobdata *blob)> f, bool include_blob = false) const = 0;
 
   //
   // Hard fork related storage

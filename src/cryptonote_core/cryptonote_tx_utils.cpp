@@ -1,5 +1,6 @@
+// Copyright (c) 2019, The NERVA Project
 // Copyright (c) 2017-2018, The Masari Project
-// Copyright (c) 2014-2018, The Monero Project
+// Copyright (c) 2014-2019, The Monero Project
 // 
 // All rights reserved.
 // 
@@ -39,7 +40,9 @@ using namespace epee;
 #include "cryptonote_tx_utils.h"
 #include "cryptonote_config.h"
 #include "blockchain_db/blockchain_db.h"
+#include "blockchain.h"
 #include "cryptonote_basic/miner.h"
+#include "cryptonote_basic/random_numbers.h"
 #include "cryptonote_basic/tx_extra.h"
 #include "cryptonote_core/blockchain.h"
 #include "crypto/crypto.h"
@@ -631,21 +634,88 @@ namespace cryptonote
     return true;
   }
   //---------------------------------------------------------------
-  bool get_block_longhash(crypto::cn_hash_context_t *context, Blockchain *bc, const block& b, crypto::hash& res, const uint64_t height)
+  void get_altblock_longhash(crypto::cn_hash_context_t *context, Blockchain *bc, const block& b, crypto::hash& res, const uint64_t main_height, const uint64_t height, const uint64_t seed_height, const crypto::hash& seed_hash)
   {
-    switch (b.major_version)
-    {
+	  blobdata bd = get_block_hashing_blob(b);
+
+    assert(height > 257);
+    uint64_t stable_height = height - 256;
+    BlockchainDB& db = bc->get_db();
+
+    crypto::hash h;
+    get_blob_hash(bd, h);
+
+    HC128_State rng_state;
+    HC128_Init(&rng_state, (unsigned char*)h.data, (unsigned char*)h.data+16);
+
+    db.get_cna_v5_data(context->salt, &rng_state, stable_height);
+
+    rx_alt_slowhash(context, main_height, seed_height, seed_hash.data, context->salt, CN_SALT_MEMORY, res.data);
+  }
+
+  bool get_block_longhash(crypto::cn_hash_context_t *context, Blockchain *bc, const block& b, crypto::hash& res, const uint64_t height, const int miners)
+  {
+    if (b.major_version < 2) {
+      blobdata bd = get_block_hashing_blob(b);
+      crypto::cn_slow_hash(context, bd.data(), bd.size(), res);
+      return true;
+    }
+    switch (b.major_version) {
       case 2:
         return get_block_longhash_v1(context, bc, b, res, height);
       default:
-      {
-        blobdata bd = get_block_hashing_blob(b);
-        crypto::cn_slow_hash(context, bd.data(), bd.size(), res);
-        return true;
+        return get_block_longhash_v2(context, bc, b, res, height, miners);
       }
     }
-  }
   //---------------------------------------------------------------
+  crypto::hash get_block_longhash(crypto::cn_hash_context_t *context, Blockchain *bc, const block& b, const uint64_t height, const int miners)
+  {
+    crypto::hash p = crypto::null_hash;
+    get_block_longhash(context, bc, b, p, height, miners);
+    return p;
+  }
+
+  void get_block_longhash_reorg(const uint64_t split_height)
+  {
+    rx_reorg(split_height);
+  }
+
+  //---------------------------------------------------------------
+
+  bool get_block_longhash_v2(crypto::cn_hash_context_t *context, Blockchain *bc, const block& b, crypto::hash& res, uint64_t height, const int miners)
+  {
+    blobdata bd = get_block_hashing_blob(b);
+    uint64_t seed_height;
+
+    if (rx_needhash(context, height, &seed_height)) 
+    {
+      crypto::hash hash;
+      if (bc != NULL)
+        hash = bc->get_pending_block_id_by_height(seed_height);
+      else
+        memset(&hash, 0, sizeof(hash));  // only happens when generating genesis block
+      
+      rx_seedhash(context, seed_height, hash.data, miners);
+    }
+
+    //Calculate salt in the same manner as v11
+    assert(height > 257);
+    uint64_t stable_height = height - 256;
+    BlockchainDB& db = bc->get_db();
+
+    crypto::hash h;
+    get_blob_hash(bd, h);
+
+    HC128_State rng_state;
+    HC128_Init(&rng_state, (unsigned char*)h.data, (unsigned char*)h.data+16);
+
+    db.get_cna_v5_data(context->salt, &rng_state, stable_height);
+
+    rx_slow_hash(context, context->salt, CN_SALT_MEMORY, res.data, miners);
+    return true;
+  }
+  
+//---------------------------------------------------------------
   bool get_block_longhash_v1(crypto::cn_hash_context_t *context, Blockchain *bc, const block& b, crypto::hash& res, uint64_t height)
   {
     // Guard against chain splits by only taking data from blocks with at least
