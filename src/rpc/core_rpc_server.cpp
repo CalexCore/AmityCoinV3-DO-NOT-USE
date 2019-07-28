@@ -54,7 +54,6 @@ using namespace epee;
 #include "rpc/rpc_args.h"
 #include "rpc/rpc_handler.h"
 #include "core_rpc_server_error_codes.h"
-#include "p2p/net_node.h"
 #include "version.h"
 #include "cryptonote_config.h"
 
@@ -92,7 +91,7 @@ namespace cryptonote
     command_line::add_arg(desc, arg_restricted_rpc);
     command_line::add_arg(desc, arg_bootstrap_daemon_address);
     command_line::add_arg(desc, arg_bootstrap_daemon_login);
-    cryptonote::rpc_args::init_options(desc, true);
+    cryptonote::rpc_args::init_options(desc, true, false);
   }
   //------------------------------------------------------------------------------------------------------------------------------
   core_rpc_server::core_rpc_server(
@@ -113,7 +112,7 @@ namespace cryptonote
     m_net_server.set_threads_prefix("RPC");
     m_net_server.set_connection_filter(&m_p2p);
 
-    auto rpc_config = cryptonote::rpc_args::process(vm, true);
+    auto rpc_config = cryptonote::rpc_args::process(vm, true, false);
     if (!rpc_config)
       return false;
 
@@ -148,7 +147,8 @@ namespace cryptonote
 
     auto rng = [](size_t len, uint8_t *ptr){ return crypto::rand(len, ptr); };
     return epee::http_server_impl_base<core_rpc_server, connection_context>::init(
-      rng, std::move(port), std::move(rpc_config->bind_ip), std::move(rpc_config->access_control_origins), std::move(http_login), std::move(rpc_config->ssl_options)
+      rng, std::move(port), std::move(rpc_config->bind_ip), std::move(rpc_config->access_control_origins),
+      epee::net_utils::http::http_auth_digest, std::move(http_login), std::move(rpc_config->ssl_options)
     );
   }
   //------------------------------------------------------------------------------------------------------------------------------
@@ -709,6 +709,22 @@ namespace cryptonote
     res.status = CORE_RPC_STATUS_OK;
 
     return true;
+  }
+  //------------------------------------------------------------------------------------------------------------------------------
+  bool core_rpc_server::on_add_peer(const COMMAND_RPC_ADD_PEER::request& req, COMMAND_RPC_ADD_PEER::response& res, epee::json_rpc::error& error_resp, const connection_context *ctx)
+  {
+    PERF_TIMER(on_add_peer);
+
+    if (m_p2p.add_peer(req.host))
+    {
+      res.status = CORE_RPC_STATUS_OK;
+      return true;
+    }
+    else
+    {
+      res.status = "Failed to add peer";
+      return false;
+    }
   }
   //------------------------------------------------------------------------------------------------------------------------------
   bool core_rpc_server::on_get_transactions(const COMMAND_RPC_GET_TRANSACTIONS::request& req, COMMAND_RPC_GET_TRANSACTIONS::response& res, const connection_context *ctx)
