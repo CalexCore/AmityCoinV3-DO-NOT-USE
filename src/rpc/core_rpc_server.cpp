@@ -711,6 +711,22 @@ namespace cryptonote
     return true;
   }
   //------------------------------------------------------------------------------------------------------------------------------
+  bool core_rpc_server::on_add_peer(const COMMAND_RPC_ADD_PEER::request& req, COMMAND_RPC_ADD_PEER::response& res, epee::json_rpc::error& error_resp, const connection_context *ctx)
+  {
+    PERF_TIMER(on_add_peer);
+
+    if (m_p2p.add_peer(req.host))
+    {
+      res.status = CORE_RPC_STATUS_OK;
+      return true;
+    }
+    else
+    {
+      res.status = "Failed to add peer";
+      return false;
+    }
+  }
+  //------------------------------------------------------------------------------------------------------------------------------
   bool core_rpc_server::on_get_transactions(const COMMAND_RPC_GET_TRANSACTIONS::request& req, COMMAND_RPC_GET_TRANSACTIONS::response& res, const connection_context *ctx)
   {
     PERF_TIMER(on_get_transactions);

@@ -248,6 +248,35 @@ namespace nodetool
   }
   //-----------------------------------------------------------------------------------
   template<class t_payload_net_handler>
+  bool node_server<t_payload_net_handler>::add_peer(const std::string &address)
+  {
+    const uint16_t default_port = cryptonote::get_config(m_nettype).P2P_DEFAULT_PORT;
+    expect<epee::net_utils::network_address> adr = net::get_network_address(address, default_port);
+    if(adr == net::error::unsupported_address || !adr)
+    {
+      MINFO("Not adding peer due to invalid address: " << address);
+      return false;
+    }
+
+    auto zone_entry = m_network_zones.find(adr->get_zone());
+    if(zone_entry == m_network_zones.end())
+    {
+      MINFO("Not adding peer " << address << " because it resides in an unsupported zone");
+      return false;
+    }
+    nodetool::peerlist_entry pe = AUTO_VAL_INIT(pe);
+    pe.id = crypto::rand<uint64_t>();
+    pe.adr = std::move(*adr);
+    if(!zone_entry->second.m_peerlist.append_with_peer_white(pe))
+    {
+      MERROR("Failed to add peer " << address << " due to internal error");
+      return false;
+    }
+    MCLOG_CYAN(el::Level::Info, "global", "Peer " << address << " added.");
+    return true;
+  }
+  //-----------------------------------------------------------------------------------
+  template<class t_payload_net_handler>
   bool node_server<t_payload_net_handler>::handle_command_line(
       const boost::program_options::variables_map& vm
     )

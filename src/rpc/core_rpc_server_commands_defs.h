@@ -85,7 +85,7 @@ namespace cryptonote
 // advance which version they will stop working with
 // Don't go over 32767 for any of these
 #define CORE_RPC_VERSION_MAJOR 2
-#define CORE_RPC_VERSION_MINOR 0
+#define CORE_RPC_VERSION_MINOR 1
 #define MAKE_CORE_RPC_VERSION(major,minor) (((major)<<16)|(minor))
 #define CORE_RPC_VERSION MAKE_CORE_RPC_VERSION(CORE_RPC_VERSION_MAJOR, CORE_RPC_VERSION_MINOR)
 
@@ -2371,6 +2371,29 @@ namespace cryptonote
         KV_SERIALIZE(decoded_outs)
       END_KV_SERIALIZE_MAP()
     };
-	typedef epee::misc_utils::struct_init<response_t> response;
+	  typedef epee::misc_utils::struct_init<response_t> response;
+  };
+
+  struct COMMAND_RPC_ADD_PEER
+  {
+    struct request_t
+    {
+      std::string host;
+
+      BEGIN_KV_SERIALIZE_MAP()
+        KV_SERIALIZE(host)
+      END_KV_SERIALIZE_MAP()
+    };
+	  typedef epee::misc_utils::struct_init<request_t> request;
+
+    struct response_t
+    {
+      std::string status;
+
+      BEGIN_KV_SERIALIZE_MAP()
+        KV_SERIALIZE(status)
+      END_KV_SERIALIZE_MAP()
+    };
+	  typedef epee::misc_utils::struct_init<response_t> response;
   };
 }
