@@ -825,11 +825,7 @@ struct Wallet
      *                          after object returned
      */
 
-    virtual PendingTransaction * createTransaction(const std::string &dst_addr, const std::string &payment_id,
-                                                   optional<uint64_t> amount, uint32_t mixin_count,
-                                                   PendingTransaction::Priority = PendingTransaction::Priority_Low,
-                                                   uint32_t subaddr_account = 0,
-                                                   std::set<uint32_t> subaddr_indices = {}) = 0;
+    virtual PendingTransaction * createTransaction(const std::string &dst_addr, const std::string &payment_id, optional<uint64_t> amount, uint32_t mixin_count, PendingTransaction::Priority = PendingTransaction::Priority_Low, uint32_t subaddr_account = 0, std::set<uint32_t> subaddr_indices = {}) = 0;
 
     /*!
      * \brief createSweepUnmixableTransaction creates transaction with unmixable outputs.
