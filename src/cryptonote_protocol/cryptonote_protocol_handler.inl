@@ -325,11 +325,6 @@ namespace cryptonote
 
     if(m_core.have_block(hshd.top_id))
     {
-      if (target > hshd.current_height)
-      {
-        MINFO(context << "the peer doesn't appear to be synced, disconnecting");
-        return false;
-      }
       context.m_state = cryptonote_connection_context::state_normal;
       if(is_inital && target == m_core.get_current_blockchain_height())
         on_connection_synchronized();
@@ -915,12 +910,12 @@ namespace cryptonote
   int t_cryptonote_protocol_handler<t_core>::handle_request_get_objects(int command, NOTIFY_REQUEST_GET_OBJECTS::request& arg, cryptonote_connection_context& context)
   {
     MLOG_P2P_MESSAGE("Received NOTIFY_REQUEST_GET_OBJECTS (" << arg.blocks.size() << " blocks)");
-    
-     if (arg.blocks.size() + arg.txs.size() > CURRENCY_PROTOCOL_MAX_OBJECT_REQUEST_COUNT)
+
+    if (arg.blocks.size() > CURRENCY_PROTOCOL_MAX_OBJECT_REQUEST_COUNT)
       {
         LOG_ERROR_CCONTEXT(
             "Requested objects count is too big ("
-            << arg.blocks.size() + arg.txs.size() << ") expected not more then "
+            << arg.blocks.size() << ") expected not more than "
             << CURRENCY_PROTOCOL_MAX_OBJECT_REQUEST_COUNT);
         drop_connection(context, false, false);
         return 1;

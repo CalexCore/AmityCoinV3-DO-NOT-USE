@@ -70,7 +70,7 @@ public:
   bool run()
   {
     //initialize core here
-    MGUSER("Initializing core...");
+    MGINFO("Initializing core...");
 #if defined(PER_BLOCK_CHECKPOINT)
     const cryptonote::GetCheckpointsCallback& get_checkpoints = blocks::GetCheckpointsData;
 #else
@@ -80,7 +80,7 @@ public:
     {
       return false;
     }
-    MGUSER("Core initialized OK");
+    MGINFO("Core initialized OK");
     return true;
   }
 
@@ -91,7 +91,7 @@ public:
 
   ~t_core()
   {
-    MGUSER("Deinitializing core...");
+    MGINFO("Deinitializing core...");
     try {
       m_core.deinit();
       m_core.set_cryptonote_protocol(nullptr);

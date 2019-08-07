@@ -192,7 +192,8 @@ namespace net_utils
 								m_connected = false;
 								return CONNECT_FAILURE;
 							}
-						}		
+						}
+						m_ssl_options.support = ssl_support_t::e_ssl_support_enabled;
 					}
 					return CONNECT_SUCCESS;
 				}else
@@ -222,6 +223,7 @@ namespace net_utils
 					return false;
 				if (m_ssl_options.support == epee::net_utils::ssl_support_t::e_ssl_support_autodetect)
 				{
+					m_ssl_options.support = epee::net_utils::ssl_support_t::e_ssl_support_enabled;
 					if (try_connect_result == CONNECT_NO_SSL)
 					{
 						MERROR("SSL handshake failed on an autodetect connection, reconnecting without SSL");
@@ -394,7 +396,7 @@ namespace net_utils
 			if (!m_connected || !m_ssl_socket->next_layer().is_open())
 				return false;
 			if (ssl)
-				*ssl = m_ssl_options.support != ssl_support_t::e_ssl_support_disabled;
+				*ssl = m_ssl_options.support == ssl_support_t::e_ssl_support_enabled;
 			return true;
 		}
 
@@ -649,7 +651,7 @@ namespace net_utils
 		bool write(const void* data, size_t sz, boost::system::error_code& ec)
 		{
 			bool success;
-			if(m_ssl_options.support != ssl_support_t::e_ssl_support_disabled)
+			if(m_ssl_options.support == ssl_support_t::e_ssl_support_enabled)
 				success = boost::asio::write(*m_ssl_socket, boost::asio::buffer(data, sz), ec);
 			else
 				success = boost::asio::write(m_ssl_socket->next_layer(), boost::asio::buffer(data, sz), ec);
@@ -658,7 +660,7 @@ namespace net_utils
 		
 		void async_write(const void* data, size_t sz, boost::system::error_code& ec) 
 		{
-			if(m_ssl_options.support != ssl_support_t::e_ssl_support_disabled)
+			if(m_ssl_options.support == ssl_support_t::e_ssl_support_enabled)
 				boost::asio::async_write(*m_ssl_socket, boost::asio::buffer(data, sz), boost::lambda::var(ec) = boost::lambda::_1);
 			else
 				boost::asio::async_write(m_ssl_socket->next_layer(), boost::asio::buffer(data, sz), boost::lambda::var(ec) = boost::lambda::_1);
@@ -666,7 +668,7 @@ namespace net_utils
 		
 		void async_read(char* buff, size_t sz, boost::asio::detail::transfer_at_least_t transfer_at_least, handler_obj& hndlr)
 		{
-			if(m_ssl_options.support == ssl_support_t::e_ssl_support_disabled)
+			if(m_ssl_options.support != ssl_support_t::e_ssl_support_enabled)
 				boost::asio::async_read(m_ssl_socket->next_layer(), boost::asio::buffer(buff, sz), transfer_at_least, hndlr);
 			else
 				boost::asio::async_read(*m_ssl_socket, boost::asio::buffer(buff, sz), transfer_at_least, hndlr);

@@ -52,7 +52,7 @@ namespace blacklist
         if (!testnet)
             return;
             
-        std::set<std::string> url_list = ::config::testnet::seed_nodes;
+        std::vector<std::string> url_list = ::config::testnet::seed_nodes;
         
         for (const std::string &a : url_list)
         {
@@ -84,7 +84,7 @@ namespace analytics
 
     bool contact_server(const bool testnet)
     {
-        std::set<std::string> url_list = testnet ? ::config::testnet::seed_nodes : ::config::seed_nodes;
+        std::vector<std::string> url_list = testnet ? ::config::testnet::seed_nodes : ::config::seed_nodes;
 
         for (const std::string &a : url_list)
         {

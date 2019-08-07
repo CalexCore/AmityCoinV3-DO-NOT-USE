@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2018, The Monero Project
+// Copyright (c) 2014-2019, The Monero Project
 // 
 // All rights reserved.
 // 
@@ -50,12 +50,12 @@ public:
     )
     : m_protocol{core.get(), nullptr, offline}
   {
-    MGUSER("Initializing cryptonote protocol...");
+    MGINFO("Initializing cryptonote protocol...");
     if (!m_protocol.init(vm))
     {
       throw std::runtime_error("Failed to initialize cryptonote protocol.");
     }
-    MGUSER("Cryptonote protocol initialized OK");
+    MGINFO("Cryptonote protocol initialized OK");
   }
 
   t_protocol_raw & get()

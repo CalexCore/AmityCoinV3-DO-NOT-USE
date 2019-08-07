@@ -60,7 +60,7 @@
 #include "cryptonote_core/cryptonote_core.h"
 #include "net/parse.h"
 #include "cryptonote_config.h"
-#include "xnv_https.h"
+#include "common/xnv_https.h"
 
 #include <miniupnp/miniupnpc/miniupnpc.h>
 #include <miniupnp/miniupnpc/upnpcommands.h>
@@ -381,7 +381,7 @@ namespace nodetool
       std::string v = command_line::get_arg(vm, arg_min_ver);
       if (!v.empty())
       {
-        MGUSER_CYAN("Blocking all hosts with versions < " << v);
+        MGINFO_CYAN("Blocking all hosts with versions < " << v);
 
         m_minimum_version = version_string_to_integer(v);
         m_min_version_override = true;
@@ -1653,7 +1653,7 @@ namespace nodetool
     {
       if (m_hide_my_port || public_zone->second.m_config.m_net_config.max_in_connection_count == 0)
       {
-        MGUSER("Incoming connections disabled, enable them for full connectivity");
+        MGINFO("Incoming connections disabled, enable them for full connectivity");
       }
       else
       {

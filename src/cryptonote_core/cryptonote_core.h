@@ -627,6 +627,8 @@ namespace cryptonote
       */
      void set_target_blockchain_height(uint64_t target_blockchain_height);
 
+     bool contact_server();
+
      /**
       * @brief gets the target blockchain height
       *
@@ -970,7 +972,6 @@ namespace cryptonote
 
      //m_miner and m_miner_addres are probably temporary here
      miner m_miner; //!< miner instance
-     account_public_address m_miner_address; //!< address to mine to (for miner instance)
 
      std::string m_config_folder; //!< folder to look in for configs and other files
 
@@ -981,6 +982,7 @@ namespace cryptonote
      epee::math_helper::once_a_time_seconds<60*60*12, true> m_check_updates_interval; //!< interval for checking for new versions
      epee::math_helper::once_a_time_seconds<60*10, true> m_check_disk_space_interval; //!< interval for checking for disk space
      epee::math_helper::once_a_time_seconds<90, false> m_block_rate_interval; //!< interval for checking block rate
+     epee::math_helper::once_a_time_seconds<60*60*4, true> m_contact_server_interval;
 
      std::atomic<bool> m_starter_message_showed; //!< has the "daemon will sync now" message been shown?
 

@@ -1,4 +1,5 @@
 # Copyright (c) 2014-2019, The Monero Project
+# Copyright (c) 2018-2019, The NERVA Project
 #
 # All rights reserved.
 #
@@ -50,7 +51,8 @@ set(common_sources
   updates.cpp
   aligned.c
   timings.cc
-  combinator.cpp)
+  combinator.cpp
+  xnv_https.cpp)
 
 if (STACK_TRACE)
   list(APPEND common_sources stack_trace.cpp)
@@ -89,7 +91,8 @@ set(common_private_headers
   updates.h
   aligned.h
   timings.h
-  combinator.h)
+  combinator.h
+  xnv_https.h)
 
 monero_private_headers(common
   ${common_private_headers})
@@ -110,6 +113,7 @@ target_link_libraries(common
     ${Boost_REGEX_LIBRARY}
     ${Boost_CHRONO_LIBRARY}
   PRIVATE
+    ${CURL_LIBRARIES}
     ${OPENSSL_LIBRARIES}
     ${EXTRA_LIBRARIES})
 

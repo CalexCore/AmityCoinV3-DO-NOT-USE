@@ -763,7 +763,7 @@ namespace cryptonote
     // try the pool for any missing txes
     size_t found_in_pool = 0;
     std::unordered_set<crypto::hash> pool_tx_hashes;
-    std::unordered_map<crypto::hash, tx_info> per_tx_pool_tx_info;
+    std::unordered_map<crypto::hash, bool> double_spend_seen;
     if (!missed_txs.empty())
     {
       std::vector<tx_info> pool_tx_info;
@@ -809,7 +809,7 @@ namespace cryptonote
             {
               if (ti.id_hash == hash_string)
               {
-                per_tx_pool_tx_info.insert(std::make_pair(h, ti));
+                double_spend_seen.insert(std::make_pair(h, ti.double_spend_seen));
                 break;
               }
             }
@@ -838,17 +838,14 @@ namespace cryptonote
       if (e.in_pool)
       {
         e.block_height = e.block_timestamp = std::numeric_limits<uint64_t>::max();
-        auto it = per_tx_pool_tx_info.find(tx_hash);
-        if (it != per_tx_pool_tx_info.end())
+        if (double_spend_seen.find(tx_hash) != double_spend_seen.end())
         {
-          e.double_spend_seen = it->second.double_spend_seen;
-          e.relayed = it->second.relayed;
+          e.double_spend_seen = double_spend_seen[tx_hash];
         }
         else
         {
-          MERROR("Failed to determine pool info for " << tx_hash);
+          MERROR("Failed to determine double spend status for " << tx_hash);
           e.double_spend_seen = false;
-          e.relayed = false;
         }
       }
       else
@@ -856,7 +853,6 @@ namespace cryptonote
         e.block_height = m_core.get_blockchain_storage().get_db().get_tx_block_height(tx_hash);
         e.block_timestamp = m_core.get_blockchain_storage().get_db().get_block_timestamp(e.block_height);
         e.double_spend_seen = false;
-        e.relayed = false;
       }
 
       // fill up old style responses too, in case an old wallet asks
@@ -2285,12 +2281,6 @@ namespace cryptonote
   bool core_rpc_server::on_update(const COMMAND_RPC_UPDATE::request& req, COMMAND_RPC_UPDATE::response& res, const connection_context *ctx)
   {
     PERF_TIMER(on_update);
-
-    if (m_core.offline())
-    {
-      res.status = "Daemon is running offline";
-      return true;
-    }
 
     static const char software[] = "amity-cli";
 #ifdef BUILD_TAG

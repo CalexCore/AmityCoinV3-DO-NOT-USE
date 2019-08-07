@@ -116,7 +116,6 @@ void keccak(const uint8_t *in, size_t inlen, uint8_t *md, int mdlen)
       local_abort("Bad keccak use");
     }
 
-    memcpy(temp, in, inlen);
     if (inlen > 0)
       memcpy(temp, in, inlen);
     temp[inlen++] = 1;

@@ -42,7 +42,7 @@
 #define MONERO_DEFAULT_LOG_CATEGORY "wallet.rpc"
 
 #define WALLET_RPC_VERSION_MAJOR 1
-#define WALLET_RPC_VERSION_MINOR 10
+#define WALLET_RPC_VERSION_MINOR 9
 #define MAKE_WALLET_RPC_VERSION(major,minor) (((major)<<16)|(minor))
 #define WALLET_RPC_VERSION MAKE_WALLET_RPC_VERSION(WALLET_RPC_VERSION_MAJOR, WALLET_RPC_VERSION_MINOR)
 namespace tools
@@ -975,8 +975,6 @@ namespace wallet_rpc
     std::string tx_hash;
     cryptonote::subaddress_index subaddr_index;
     std::string key_image;
-    uint64_t block_height;
-    bool frozen;
     bool unlocked;
 
     BEGIN_KV_SERIALIZE_MAP()
@@ -985,8 +983,6 @@ namespace wallet_rpc
       KV_SERIALIZE(global_index)
       KV_SERIALIZE(tx_hash)
       KV_SERIALIZE(subaddr_index)
-      KV_SERIALIZE(block_height)
-      KV_SERIALIZE(frozen)
       KV_SERIALIZE(key_image)
       KV_SERIALIZE(unlocked)
     END_KV_SERIALIZE_MAP()

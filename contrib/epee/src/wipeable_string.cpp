@@ -63,7 +63,6 @@ wipeable_string::wipeable_string(const std::string &other)
 {
   grow(other.size());
   if (size() > 0)
-    if (size() > 0)
     memcpy(buffer.data(), other.c_str(), size());
 }
 
@@ -116,7 +115,6 @@ void wipeable_string::grow(size_t sz, size_t reserved)
   }
   size_t old_sz = buffer.size();
   std::unique_ptr<char[]> tmp{new char[old_sz]};
- 
   if (old_sz > 0)
   {
     memcpy(tmp.get(), buffer.data(), old_sz * sizeof(char));

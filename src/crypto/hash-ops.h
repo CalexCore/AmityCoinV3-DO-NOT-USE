@@ -74,7 +74,7 @@ void hash_process(union hash_state *state, const uint8_t *buf, size_t count);
 
 #endif
 
-#include "../external/randomx/src/randomx.h"
+#include "randomx.h"
 
 enum {
   HASH_SIZE = 32,

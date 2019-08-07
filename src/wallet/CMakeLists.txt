@@ -28,6 +28,8 @@
 
 # include (${PROJECT_SOURCE_DIR}/cmake/libutils.cmake)
 
+include_directories(${RANDOMX_INCLUDE})
+
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 
 set(wallet_sources
@@ -106,7 +108,7 @@ target_link_libraries(wallet_rpc_server
     ${EXTRA_LIBRARIES})
 set_property(TARGET wallet_rpc_server
   PROPERTY
-    OUTPUT_NAME "amity-wallet-rpc")
+    OUTPUT_NAME "nerva-wallet-rpc")
 install(TARGETS wallet_rpc_server DESTINATION bin)
 
 
