@@ -7423,8 +7423,48 @@ void wallet2::get_outs(std::vector<std::vector<tools::wallet2::get_outs_entry>> 
       LOG_PRINT_L1("Fake output makeup: " << requested_outputs_count << " requested: " << recent_outputs_count << " recent, " <<
           pre_fork_outputs_count << " pre-fork, " << post_fork_outputs_count << " post-fork, " <<
           (requested_outputs_count - recent_outputs_count - pre_fork_outputs_count - post_fork_outputs_count) << " full-chain");
+   
 
-      uint64_t num_found = 0;      
+      uint64_t num_found = 0;
+
+      // if we have a known ring, use it
+      bool existing_ring_found = false;
+      if (td.m_key_image_known && !td.m_key_image_partial)
+      {
+        std::vector<uint64_t> ring;
+        if (get_ring(get_ringdb_key(), td.m_key_image, ring))
+        {
+          MINFO("This output has a known ring, reusing (size " << ring.size() << ")");
+          THROW_WALLET_EXCEPTION_IF(ring.size() > fake_outputs_count + 1, error::wallet_internal_error,
+              "An output in this transaction was previously spent on another chain with ring size " +
+              std::to_string(ring.size()) + ", it cannot be spent now with ring size " +
+              std::to_string(fake_outputs_count + 1) + " as it is smaller: use a higher ring size");
+          bool own_found = false;
+          existing_ring_found = true;
+          for (const auto &out: ring)
+          {
+            MINFO("Ring has output " << out);
+            if (out < num_outs)
+            {
+              MINFO("Using it");
+              req.outputs.push_back({amount, out});
+              ++num_found;
+              seen_indices.emplace(out);
+              if (out == td.m_global_output_index)
+              {
+                MINFO("This is the real output");
+                own_found = true;
+              }
+            }
+            else
+            {
+              MINFO("Ignoring output " << out << ", too recent");
+            }
+          }
+          THROW_WALLET_EXCEPTION_IF(!own_found, error::wallet_internal_error,
+              "Known ring does not include the spent output: " + std::to_string(td.m_global_output_index));
+        }
+      }
 
       if (num_outs <= requested_outputs_count)
       {
