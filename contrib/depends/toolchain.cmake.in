@@ -52,6 +52,8 @@ SET(BOOST_USE_STATIC_RUNTIME TRUE)
 SET(OpenSSL_DIR @prefix@/lib)
 SET(ARCHITECTURE @arch@)
 
+SET(CURL_INCLUDE_DIR @prefix@/include)
+
 # for libraries and headers in the target directories
 set (CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER) # Find programs on host
 set (CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY) # Find libs in target
