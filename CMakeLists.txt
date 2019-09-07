@@ -396,7 +396,7 @@ endif()
 
 find_package(OpenSSL REQUIRED)
 message(STATUS "Using OpenSSL include dir at ${OPENSSL_INCLUDE_DIR}")
-set(CURL_LICRARY "-lcurl")
+set(CURL_LIBRARY "-lcurl")
 find_package(CURL REQUIRED)
 message(STATUS "Using Curl include dir at ${CURL_INCLUDE_DIR}")
 
