@@ -1591,6 +1591,10 @@ namespace cryptonote
         main_message = "The daemon will start synchronizing with the network. This may take a long time to complete.";
 
       //Forker: change ascii art if you want
+      #if defined(WINDOWS) || defined(WIN32)
+      MGUSER_BLUE(ENDL
+        << "AmityCoin" << ENDL);
+      #else
       MGUSER_BLUE(ENDL 
       << R"(════════════════════════════════════════════════════════════════════════════════)" << ENDL
       << R"(██╗   █████╗ ███╗   ███╗██╗████████╗██╗   ██╗ ██████╗ ██████╗ ██╗███╗   ██╗  ██╗)" << ENDL
@@ -1600,6 +1604,7 @@ namespace cryptonote
       << R"(██╔╝ ██║  ██║██║ ╚═╝ ██║██║   ██║      ██║   ╚██████╗╚██████╔╝██║██║ ╚████║ ╚██╗)" << ENDL
       << R"(╚═╝  ╚═╝  ╚═╝╚═╝     ╚═╝╚═╝   ╚═╝      ╚═╝     ╚════╝  ╚════╝ ╚═╝╚═╝   ╚══╝  ╚═╝)" << ENDL
       << R"(═════════════════════════CN-ADAPTIVE Feat. CN-SOFT SHELL════════════════════════)" << ENDL);
+      #endif
        
         
       MGUSER_YELLOW(ENDL
